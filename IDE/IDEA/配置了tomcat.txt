@@ -1,0 +1,19 @@
+	
+1、Tomcat 配置时点加号，不要点templates
+2、run --> edit configurations --> deployment --> 加号 --> artifacts
+3、项目 --> 右键 --> open models settings是重点，根据网友博客内容走 --> https://blog.csdn.net/eaphyy/article/details/72513914
+	https://blog.csdn.net/pzasdq/article/details/52537337
+4、搞了半天，网上百度了半天，误打误撞出来了
+	(1)访问地址：http://localhost:8082/xjymHandle_war_exploded/index.html，而不是http://localhost:8082/xjymHandle_war_exploded/	
+		index.html
+	(2)我重新run --> tomcat server --> local --> 加号 --> name --> tomcat7.0.65_2
+		deployment --> 加号 --> artifacts
+		server --> url --> 自动生成的http://localhost:8082/xjymHandle_war_exploded/
+	(3)比如想把路径改成http://localhost:8082/xjymHandleWar/则需要：
+		第一步：项目右键 --> open models settings
+		第二步：artifacts --> Name --> 改为xjymHandleWar
+		第三步：新建一个本地的tomcat server --> deploymnet --> 加号 --> artifacts --> 名字已改变 --> server --> 
+			默认路径已改变
+5、eclipse项目导入idea一共两步：
+	第一步：项目右键 --> open models settings配置项目
+	第二步：run --> edit configurations 配置tomcat server

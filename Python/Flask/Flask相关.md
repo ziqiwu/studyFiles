@@ -20,6 +20,10 @@
 1、mkvirtualenv flaskenv
 2、workon flaskenv
 3、pip install flask  -->安装flask
+第三步：创建工程
+1、桌面新建空文件夹，起名firstFlask。
+2、打开pycharm，file，New Project，点击Location三个点找到桌面的firstFlask文件夹，Project 			Interpreter，Existing interpreter，点击三个点，Interpreter点击三个点，找到						D:\workon_home\env1\Scripts\python.exe(即自己新建的虚拟环境)，make available to all 			projects，create，open in a new window
+3、右键项目firstFlask，new，python file，Name写manage.py。(至此搭建完成)  
 ```
 
 #### 入门
@@ -76,7 +80,7 @@
         @app.route('/args/<name>_<float:age>/') #限制参数类型为float
         @app.route('/args/<name>_<age>/') #默认，限制参数类型为string
         @app.route('/args/<name>_<string:age>/') #限制参数类型为string 默认值就是
-        @app.route('/args/<name>_<path:age>/') #将路由地址age后面的所有参数 都认为是当前age的参数值, 				/分隔符不再作为分隔符使用  比如：http://127.0.0.1:5000/args/zhangsan_18/12/abc/2/
+        @app.route('/args/<name>_<path:age>/') #将路由地址age后面的所有参数 都认为是当前age的参数			值,/分隔符不再作为分隔符使用  比如：http://127.0.0.1:5000/args/zhangsan_18/12/abc/2/
         def args(name,age):
             print(type(age))
             return '我叫{} 我今年{}岁了'.format(name,age)
@@ -96,12 +100,75 @@
     (3) 使用系统的 make_response进行响应
     	@app.route('/response/')
         def res():
-            res = make_response('我是响应',404) #设置cookie的时候使用 当前的make_response  其它情况				都是响应一个html页面
+            res = make_response('我是响应',404) #设置cookie的时候使用 当前的make_response  其它情都				是响应一个html页面
             return res
      注意：
         1. 路由地址结尾/建议都加上 因为在访问有/作为结尾的地址的时候 浏览器会自动帮你添加
-        2. 路由传参写在<参数名称> 参数的名称为 形参名
-           . 在flask中 路由地址可以相同  如果同为一个方法请求（如：GET） 则会按照顺序执行，执行在上方的		  视图函数.  视图函数 不可以重名
+        2. 路由传参写在<参数名称> 参数的名称为 形参名. 在flask中 路由地址可以相同如果同为一个方法请求			（如：GET） 则会按照顺序执行，执行在上方的视图函数.视图函数不可以重名
+6、flask启动的参数
+	参数 			 参数说明
+	debug           开启调试模式 默认为False
+     host           主机
+     port           端口号
+     threaded       多线程 默认flase
+     比如：app.run(host='0.0.0.0',port=5001,threaded=True,debug=True)
+7、请求对象
+	(1)概念：request是根据每一个用户的请求 对应创建的request对象，是由flask创建。在使用的时候，只需要			导入就可以
+	(2)列举：
+    	request属性
+        1. url  请求的完整的url  127.0.0.1:5000/request/canshu/?name=zhangsan&age=lisi&age=wangwu 
+        2. base_url  去掉get传参的url        http://127.0.0.1:5005/request/canshu/
+        3. host_url   主机和端口号的url      http://127.0.0.1:5005/
+        4. path     请求的路由地址           /request/canshu/
+        5. method  请求的方式                GET
+        6. args   获取get传参         
+        	ImmutableMultiDict([('name', 'zhangsan'), ('age', 'lisi'),('age', 'wangwu')])
+        7. args.getlist(key) 获取有相同key的get传参    getlist的参数为多个值的key['lisi','wangwu']
+        8. form   获取表单传递过来的数据  request.form 获取POST传过来的参数ImmutableMultiDict([])
+        9. files  获取文件上传的数据  ImmutableMultiDict([])
+        10. headers 获取请求头信息    
+        	User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64;rv:60.0)Gecko/20100101 							Firefox/60.0
+            Accept-Language: en-GB,en;q=0.5
+        11. cookies  获取多个cookie   											
+        	csrftoken=AA7yeEKEiY4DJtbB2mYc4Hjckyb14cY5MDFImfQ4yEUgVW4WNh9rHj3yCGZlZ47D
+	（3）示例：
+    	#请求对象
+        from  flask import request
+        @app.route('/request/<arg>/')
+        def Request(arg):
+            # print('请求的完整的url',request.url)
+            # print('去掉get传参的url',request.base_url)
+            # print('主机和端口号的url',request.host_url)
+            # print('请求的路由地址',request.path)
+            # print('请求的方式',request.method)
+            # print('获取get传参',request.args)
+            # print('获取get传参',request.args.get('age'))
+            # print('获取get传参',request.args['age'])
+            # print('获取get传参',request.args.get('name'))
+            # print('获取get传参使用getlist 返回name键的多个值',request.args.getlist('name'))
+            # print('获取表单传递过来的数据',request.form)
+            # print('files',request.files)
+            # print('获取请求头信息',request.headers)
+            # print('获取多个cookie',request.cookies)
+            # print('获取传递的json数据',request.json)
+            return 'request请求对象'
+8、abort终止
+	(1)概念：在代码运行的过程中，出现任何的异常可以使用abort 抛出标准的http状态码 终止当前程序的执行			和raise类似，抛出问题的代码的上方都正常执行，下面不再执行
+	(2)错误的捕获(自定义错误页面)
+        #捕获http错误
+        @app.errorhandler(404)
+        def page_not_found(e):
+            return '错误信息为{}'.format(e)
 
+        #捕获http错误
+        @app.errorhandler(500)
+        def page_not_found(e):
+            return '错误信息为{}'.format(e)
+	(3)abort示例(注意：返回的404页面是上面自定义的404返回内容)
+    	from flask import abort
+        @app.route('/')
+        def idnex():
+            abort(404)
+            下面代码不再执行
 ```
 
