@@ -50,7 +50,7 @@ https://blog.csdn.net/u014044812/article/details/78727496
 #### 快捷键
 
 ```python
-
+1、生成if `__name__` == '__main__': --> 键入main，就会有提醒出现
 ```
 
 #### 运行报错

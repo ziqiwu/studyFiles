@@ -31,16 +31,11 @@
 
 #### 项目开发
 
+**1、项目结构**
+
 ```python
-注意：
-	1、各个蓝本中，比如url.py、car.py中写的是各自模块的路由，然后统一在manage.py中注册
-	2、创建某个模块的蓝本对象的时候，第一个参数的作用，是在蓝本之间跳转的时候，的一个标识。
-		比如：car = Blueprint('car',__name__); -->存在于car.py模块中
-		在另一个蓝本中，不用导入from car import car，就可以redirect(url_for('car.index'))
-		可见：car并不是对象，而是蓝本管理的'car'标识，index是car.py模块中的视图函数  
-	3、通过print(render_template('index.html')) --> 其中from flask import render_template
-		index.html存在于templates目录下。
-		可以从打印中看到，并不是return render_temlate('index.html',title='我是首页')是跳转到			index.html中的，而是把index.html模板拿过来，渲染，返回去浏览器的。
+project/
+	
 ```
 
 
@@ -302,8 +297,8 @@
 > (1) 前提
 >
 > ```python
-> 需要使用secret_key 进行加密
-> 生成session所需要的加密种子
+> #需要使用secret_key 进行加密,生成session所需要的加密种子 --> 秘钥
+> #FlaskForm也需要secret_key
 > app.config['SECRET_KEY']='abcdef'
 > 导入：
 > from flask import session
@@ -678,6 +673,8 @@
 > ```python
 > templates
 > 即：在工程下直接创建文件夹，名称为templates
+> 创建完成之后，右键，mark as templates --> language --> jinjia2 --> 然后就有语法提示了
+> #注意：return render_template('')中的参数路径，默认是templates路径，所有参数接着往下写就可以了
 > ```
 
 **3、模板的渲染**
@@ -697,6 +694,7 @@
 >     # print(render_template('index.html')) 找到这个页面，吧页面的内容拿到，而非跳转到这个页面
 >     return render_template('index.html',title='我是首页')
 >     return '首页'
+> #注意：return render_template('')中的参数路径，默认是templates路径，所有参数接着往下写就可以了
 > ```
 
 **4、过滤器**
@@ -939,6 +937,8 @@
 > ```python
 > from flask_bootstrap import Bootstrap
 > bootstrap = Bootstrap(app) 	
+> #注意：模板中的{% extends 'bootstrap/base.html' %}bootstrap，就是bootstrap = Bootstrap(app) 		这个对象
+> #注意：只有在后端的manager.py模块中创建了Bootstrap的对象，前端模板才能用。
 > ```
 >
 > (3) 自定义base.html基础模板
@@ -1041,15 +1041,21 @@
 > {% endmacro %}
 > ```
 >
-> ​	宏的导入和调用 from ... import ...
+> ​	宏的导入和调用 
 >
 > ```python
 > #注意：import form指的是macro form(参数)中的宏名称'form'，
 > 	#python中是from 模块 import 方法
+> 方法一：from ... import ... --> 导入一个宏
 > {% from 'macrotest.html' import form %}
 > {{ form('用户名：','text','username') }}
 > {{ form('密码：','password','userpass') }}
 > {{ form('','submit','submit','登录') }}
+> 方法二：import ... as 别名 --> 导入模板中的所有宏
+> {% import 'macrotest.html' as macroform %}
+> {{ macroform.form('用户名：','text','username') }}
+> {{ macroform.form('密码：','password','userpass') }}
+> {{ macroform.form('','submit','submit','登录') }}
 > ```
 >
 > (4) 注意：
@@ -1079,6 +1085,7 @@
 > 	static/
 > 	templates/
 > 	manage.py
+> #注意：静态资源中的参数路径，默认是工程下的static文件夹开始，所有参数接着往下写就可以了
 > ```
 >
 > (3) 示例：
@@ -1142,6 +1149,8 @@
 >     age = 18
 >     # print(locals()) #返回当前的所有局部变量 以字典的形式 
 >     return render_template('index.html',**locals())
+> #注意：在函数中包含函数的时候，即糖语言的语法，打印出返回的内函数print，就可以看到类型是locals。
+> #作用：把局部变量都变为参数
 > ```
 >
 > (5) 使用全局变量g
@@ -1158,5 +1167,959 @@
 > g.age
 > ```
 
+**13、flash消息的显示**
+
+> (1) 概述：
+>
+> ```python
+> flash() --> 后端存储消息
+> get_flashed_messages() --> 前端/后端获取存储的值，值是一个列表，需要for循环取出
+> ```
+>
+> (2) 导入：
+>
+> ```python
+> from flask import flash,get_flashed_messages
+> ```
+>
+> (3) 示例：
+>
+> ​	manage.py
+>
+> ```python
+> @app.route('/login/',methods=['GET','POST'])
+> def login():
+>     form = Login()
+>     # form.hidde.data = '我是默认值'
+>     if form.validate_on_submit():
+>         # form.username.data
+>         if form.username.data != 'lisi':
+>             flash('当前用户不存在')
+>         elif form.confirm.data != '123456':
+>             flash('请输入正确的密码')
+>         else:
+>             flash('欢迎{}'.format(form.username.data))
+>             return redirect(url_for('index'))
+>         # print(get_flashed_messages())
+>     return render_template('boot-quick-form.html',form=form)
+> #注意：form = Login()是class Login(FlaskForm)定义的类。get_flashed_messages()前后端都可以使用
+> ```
+>
+> ​	base.html
+>
+> ```python
+> {% for info in get_flashed_messages() %}
+>     <div class="alert alert-warning alert-dismissible" role="alert">
+>     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span>
+>     </button>{{ info }}
+>     </div>
+> {% endfor %}
+> #注意：{%for%}循环标签中的div是bootstrap官网上，扒下来的警告框样式
+> ```
+
+#### 表单
+
+**1、原生表单**
+
+> (1) 方法一：进入表单和表单提交是两个视图函数
+>
+> ​	form.html
+>
+> ```python
+> <form action="{{ url_for('check_login') }}" method="post">
+>     <p>用户名： <input type="text" maxlength="12" name="username" placeholder="请输入用户			名..."></p>
+>     <p>密码： <input type="password" name="userpass" placeholder="请输入密码..."></p>
+>     <p><input type="submit" value="登录"></p>
+> </form>
+> #注意：模板中也有url_for函数，其中的check_login是manager.py中的def check_login()函数名。
+> #进入form.html页面的url是localhost:5000/login/，表单提交的action是localhost:5000/check_login/
+> ```
+>
+> ​	manager.py中的视图函数
+>
+> ```python
+> #表单第一种 原生form
+> @app.route('/login/')
+> def login():
+>     return render_template('yuanshengform/form.html')
+> 
+> #获取表单提交过来的数据
+> @app.route('/check_login/',methods=['POST']) #设置当前的路由地址只允许post请求
+> # @app.route('/check_login/') #设置当前的路由地址只允许post请求
+> def check_login():
+>     # print(request.form) #获取不到get传递过来的数据
+>     # print(request.args) #获取get传递过来的数据
+>     # print(request.form) #获取不到get传递过来的数据
+>     username = request.form.get('username')
+>     userpass = request.form.get('userpass')
+>     return '欢迎{} 密码为{}'.format(username,userpass)
+>     # return '获取到数据了'
+> ```
+>
+> (2) 方法二：进入表单和表单提交是同一个视图函数
+>
+> ```python
+> #俩个视图合并为同一个视图
+> @app.route('/login/',methods=['GET','POST'])
+> def login():
+> 	if request.method == 'POST' and request.form.get('username') and 							request.form.get('userpass'):							
+>         print(request.form)
+>         return '数据提交过来'
+>     return render_template('yuanshengform/form.html')
+> #注意：此处并没有csrf_token加密验证，不安全，别人在网页扒走提交地址和数据框，自己写一个form提交。因为没有csrf_token验证，别人的伪提交，也可以成功
+> ```
+>
+> (3) 注意：
+>
+> ```python
+> #如果form表单的action属性是空字符串，则路径还是打开form表单所在页面的对应原视图函数本身
+> ```
+>
+> 
+
+**2、flask-wtf表单扩展库**
+
+> (1) 安装：
+>
+> ```python
+> sudo pip3 install flask-wtf
+> ```
+>
+> (2) 说明：
+>
+> ```python
+> 是一个用于表单处理的扩展库 提供了csrf  和表单验证等功能
+> ```
+>
+> (3) 字段类型：
+>
+> | 字段名称      | 字段说明       |
+> | ------------- | -------------- |
+> | StringField   | 普通文本字段   |
+> | SubmitField   | 提交字段       |
+> | PasswordField | 密码字段       |
+> | HiddenField   | 隐藏域         |
+> | TextAreaField | 多行文本域字段 |
+> | DateField     | 日期字段       |
+> | DateTimeField | 日期时间字段   |
+> | IntegerField  | 整形字段       |
+> | FloatField    | 浮点形字段     |
+> | BooleanField  | bool字段       |
+> | RadioFIeld    | 单选           |
+> | SelectField   | 下拉字段       |
+> | FileField     | 文件上传       |
+>
+> (4) 验证器：
+>
+> | 验证器       | 验证器说明               |
+> | ------------ | ------------------------ |
+> | DataRequired | 必填                     |
+> | Length       | 长度 min  max            |
+> | IPAddress    | ip地址                   |
+> | URL          | url地址验证              |
+> | NumberRange  | 值的范围 min 和max       |
+> | EqualTo      | 验证俩个字段值的是否相同 |
+> | Regexp       | 正则匹配                 |
+> | Email        | 验证邮箱                 |
+>
+> ​	注意：还可以自定义验证器
+>
+> ```python
+> 示例：
+> class Login(FlaskForm):
+> 	username = StringField('用户名',validators=[DataRequired(message='用户名不能为空')])
+> 	#自定义验证器
+>     def validate_username(self,field):
+>         # print(field.data)
+>         # print(self.username.data)
+>         if field.data == 'zhangsan':
+>             raise ValidationError('该用户以存在')
+> #注意：函数名称validate_是固定的，体现了'约定优于配置'，username是FlaskForm对象中的一个属性       
+> ```
+>
+> (6) 示例
+>
+> ​	manager.py
+>
+> ```python
+> from flask import Flask ,render_template,flash,get_flashed_messages,redirect,url_for
+> from flask_script import Manager
+> from flask_wtf import FlaskForm
+> from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateTimeField, IntegerField, FloatField, BooleanField
+> from wtforms.validators import DataRequired, IPAddress, URL, Email, EqualTo, NumberRange, ValidationError, Regexp
+> from flask_bootstrap import Bootstrap
+> 
+> app=Flask(__name__)
+> app.config['SECRET_KEY']='abcdf'
+> bootstrap=Bootstrap(app)
+> manager=Manager(app)
+> 
+> class Login(FlaskForm):
+>     username = StringField('用户名',validators=[DataRequired(message='用户名不能为空')])
+>     userpass = PasswordField('密码',validators=[DataRequired(message='密码不能为						空'),EqualTo('confirm',message='俩次输入密码不一致')])          				
+>     confirm = PasswordField('确认密码')
+> 	userinfo = TextAreaField('个人信息简介',render_kw={'style':'resize:none;',
+>         'placeholder':'发表你此刻的感想...'})
+>     birth = DateField('出生年月')
+>     birth = DateTimeField('注册时间')
+> 	age = IntegerField('年龄',validators=[NumberRange(min=6,max=99,message='年龄的范围为6~99		岁')])
+>     money = FloatField('money')
+>     agree = BooleanField('是否同意')
+>     sex = RadioField('性别',choices=[('w','女'),('m','男')])
+>     address = SelectField('地址',choices=[('1001','北京'),('1002','天津'),('1003','河北')])
+>     file = FileField('选择头像')
+>     hidde = HiddenField()
+>     ip = StringField('ip地址',validators=[IPAddress(message='请输入正确的IP地址')])
+>     url = StringField('网址',validators=[URL(message='请输入正确的url')])
+>     email = StringField('邮箱',validators=[Email(message='请输入正确的邮箱地址')])
+>     phone = StringField('phone',validators=[Regexp('^1[3-8][0-9]{9}$',message='请输入正确的手			机号码')])
+>     submit = SubmitField('登录')
+>     #自定义验证器
+>     def validate_username(self,field):
+>         # print(field.data)
+>         # print(self.username.data)
+>         if field.data == 'zhangsan':
+>             raise ValidationError('该用户以存在')
+> ```
+>
+> 注意：
+>
+> ```python
+> render_kw 属性 可以给当前字段添加属性和样式 
+> 示例：
+> userinfo = TextAreaField('个人信息简介',render_kw={'style':'resize:none;','placeholder':'发表你此刻的感想...'})
+> ```
+>
+> ​	对应的模板有三种方法：
+>
+> ​	方法一：普通拿到FlaskForm对象，进行页面加载
+>
+> ​	form.html
+>
+> ```python
+> <!DOCTYPE html>
+> <html lang="en">
+> <head>
+>     <meta charset="UTF-8">
+>     <title>wtf-form</title>
+> </head>
+> <body>
+> <form action="" method="post">
+>     {{ form.csrf_token }}
+>     {{ form.username.label() }}
+>     {{ form.username(placeholder='请输入用户名...',style='color:red;') }}
+> 	{#    {{ form.username.errors }}#}
+>     {% if form.username.errors %}
+>         <span style="color: red;">{{ form.username.errors.0 }}</span>
+>     {% endif %}
+>     <br>
+>     {{ form.userpass.label() }}
+>     {{ form.userpass() }}
+> 	{#    {{ form.userpass.errors }}#}
+>     {% if form.userpass.errors %}
+>         <span style="color: red;">{{ form.userpass.errors.0 }}</span>
+>     {% endif %}
+>     <br>
+>     {{ form.submit() }}
+> </form>
+> </body>
+> </html>
+> #注意：1、{{ form.csrf_token }}是指manager.py中app.config['SECRET_KEY']='abcdf'加密过flask-wtf提供的csrf_token。
+> #2、form.username.label()指的是DateField('出生年月')等的第一个参数，就和type = 'radio'的label一样，效果即使点击汉字，就触发框
+> #3、form.username()就是该选择框了
+> #4、form.username.errors.0指的是，.errors是message，.0是索引
+> ```
+>
+> ​	方法二：相对于方法一，只是封装成了宏
+>
+> ​	form.html
+>
+> ```python
+> <!DOCTYPE html>
+> <html lang="en">
+> <head>
+>     <meta charset="UTF-8">
+>     <title>Title</title>
+>     <style>
+>         .error{
+>             color: red;
+>             list-style: none;
+>         }
+>     </style>
+> </head>
+> <body>
+> {% from 'common/wtf-macro.html' import formField %}
+> <form action="" method="post">
+>     <table>
+>         {{ formField(form.username) }}
+>         {{ formField(form.userpass) }}
+>     </table>
+>         {{ form.submit() }}
+> </form>
+> </body>
+> </html>
+> ```
+>
+> ​	宏的代码：
+>
+> ```python
+> {% macro formField(field) %}
+>     <tr>
+>         <td>{{ field.label() }}</td>
+>         <td>{{ field() }}</td> 
+>         	{# form.username() 在这个位置实现 能添加 placeholder属性 style class  #}
+>         <td>
+>             {% if field.errors %}
+>                 <ul class="error">
+>                 {% for error in field.errors %}
+>                     <li>{{ error }}</li>
+>                 {% endfor %}
+>                 </ul>
+>             {% endif %}
+>         </td>
+>     </tr>
+> {% endmacro %}
+> #使用宏，测试
+> {#{{ formField(form.username)) }}#}
+> 
+>     
+> 
+> #注意： 添加样式如下
+> <!DOCTYPE html>
+> <html lang="en">
+> <head>
+>     <meta charset="UTF-8">
+>     <title>表单</title>
+> </head>
+> <body>
+> {% macro formField(field) %}
+>     <p>{{ field.label() }}</p>
+>     <p>{{ field(**kwargs ) }}</p>
+> {% endmacro %}
+> {{ formField(form.username,class='usernameclass',
+>        style='color:red;' ) }}
+> </body>
+> </html>
+> ```
+>
+> ​	方法三：使用bootstrap的quick-form
+>
+> ```python
+> {% extends 'common/base.html' %}
+> {% import 'bootstrap/wtf.html' as wtf %}
+> {% block page_content %}
+>     <div class="row">
+>         <div class="col-md-8"><img src="{{ url_for('static',filename='img/meinv.jpg') }}" 			alt=""></div>
+>         <div class="col-md-4">{{ wtf.quick_form(form) }}</div>
+>     </div>
+> {% endblock %}
+> #注意：其中的<div class="col-md-8"></div><div class="col-md-4"></div>是bootstrap中粘过来的栅格样式。其中的'common/base.html'是在{% extends 'bootstrap/base.html' %}之后自定义的基准模板
+> ```
+
+#### 文件上传
+
+**注意：**
+
+> (1) 文件上传有几点：
+>
+> ```python
+> 1、文件大小
+> 2、文件路径
+> 3、文件类型(jpg、png)
+> 4、文件缩放
+> 5、文件名称
+> 6、文件前台默认展示和选择之后展示
+> ```
+>
+
+**1、原生文件上传**
+
+> (1) 示例：
+>
+> ​	manage.py
+>
+> ```python
+> from flask import Flask,render_template,request
+> from flask_script import Manager
+> import os
+> #pip install pillow
+> from PIL import Image 
+> 
+> app = Flask(__name__)
+> #允许上传的文件类型
+> ALLOWED_FILE = ['jpg','jpeg','gif','png']
+> #设置文件上传的路径
+> app.config['UPLOAD_DEST'] = os.path.join(os.getcwd(),'static/upload')
+> manager = Manager(app)
+> 
+> 
+> @app.route('/')
+> def index():
+>     return render_template('index.html')
+> 
+> #当前上传的文件是否允许
+> def allowd_file(suffix):
+>     return suffix in ALLOWED_FILE
+> 
+> #生成随机的图片名称
+> def random_name(suffix,length=32):
+>     import string, random
+>     Str = string.ascii_letters + '0123456789'
+>     return ''.join(random.choice(Str) for i in range(length))+'.'+suffix
+> 
+> #图片缩放
+> def img_zoom(path,width=300,height=200,prefix='s_'):
+>     # 图片缩放处理
+>     img = Image.open(path)
+>     print(img.size)  # 获取图片的大小
+>     # 重新设计图片大小
+>     img.thumbnail((width, height))
+>     newPath = os.path.join(os.path.split(path)[0],prefix+path.split('/')[-1])
+>     img.save(newPath)
+> 
+> #原生文件上传的视图函数
+> @app.route('/upload/',methods=['GET','POST'])
+> def upload():
+>     img_url = None
+>     #判断：提交了文件，并且是选择了文件的，不是空文件
+>     if request.method == 'POST' and 'file' in request.files:
+>         #取出文件上传的对象
+>         file = request.files.get('file')
+>         filename = file.filename #获取图片名称
+>         suffix = filename.split('.')[-1] #获取图片后缀
+>         if allowd_file(suffix): #判断是否允许上传
+>             # 获取生成的随机图片名称
+>             while True:
+>                 newName = random_name(suffix)
+>                 path = os.path.join(app.config['UPLOAD_DEST'],newName)
+>                 if not os.path.exists(path):
+>                     break
+>             file.save(path) #保存上传的图片
+>             #图片缩放的处理
+>             img_zoom(path)
+>             img_url = newName
+>     return render_template('yuansheng-file/form.html',img_url=img_url)
+> 
+> 
+> if __name__ == '__main__':
+>     manager.run()
+> ```
+>
+> ​	form.html
+>
+> ```python
+> <!DOCTYPE html>
+> <html lang="en">
+> <head>
+>     <meta charset="UTF-8">
+>     <title>修改头像</title>
+> </head>
+> <body>
+> {% if img_url %}
+> <img src="{{ url_for('static',filename='upload/s_'+img_url) }}" alt="">
+> {% else %}
+> <img src="{{ url_for('static',filename='img/myf.jpg') }}" alt="">
+> {% endif %}
+> <form action="" method="post" enctype="multipart/form-data">
+>     <p>选择图像</p>
+>     <p><input type="file" name="file"></p>
+>     <p><input type="submit" value="submit"></p>
+> </form>
+> </body>
+> </html>
+> ```
+
+**2、flask-uploads文件上传扩展库**
+
+> (1) 安装：
+>
+> ```python
+> sudo pip3 install flask-uploads
+> ```
+>
+> (2) 示例：
+>
+> ​	manage.py
+>
+> ```python
+> from flask import Flask,render_template,request
+> from flask_script import Manager
+> from flask_uploads import UploadSet,IMAGES,patch_request_class,configure_uploads
+> import os
+> 
+> app = Flask(__name__)
+> #原生文件上传的设置，此处都在app和manager中间的代码中设置了，app中有了上传大小，文件路径，UploadSet对象中有了文件类型，最后再把app和UploadSet对象绑定在一起configure_uploads(app,file)
+> #-------------------------------------------------------------------------
+> app.config['MAX_CONTENT_LENGTH'] = 1024*1024*64
+> app.config['UPLOADED_PHOTOS_DEST'] = os.path.join(os.getcwd(),'static/upload')
+> file = UploadSet('photos',IMAGES) #上传文件对象配置#注意：此处'photos'是固定的，否则报错    							比如改为'pho',RuntimeError: no destination for set 'pho'
+> configure_uploads(app,file)
+> patch_request_class(app,size=None)
+> #-------------------------------------------------------------------------
+> manager = Manager(app)
+> 
+> @app.route('/')
+> def index():
+>     return render_template('index.html')
+> 
+> @app.route('/upload/',methods=['GET','POST'])
+> def upload():
+>     img_url = None  #注意：此处必须先定义，因为最后一行img_url = img_url的第二个img_usr引用
+>     #判断：提交了文件，并且是选择了文件的，不是空文件
+>     if request.method == 'POST' and 'file' in request.files:
+>         #文件上传   
+>         fileName = file.save(request.files.get('file'))
+>         print(fileName) #timg.jpg
+>         # 获取 图片的地址
+>         img_url = file.url(fileName)
+>         #print(img_url) http://127.0.0.1:5000/_uploads/photos/timg.jpg
+>         #吧上面的配置的 photos也作为了一个路径
+> 
+>     return render_template('flask-uploads-form/form.html',img_url = img_url)
+> 
+> if __name__ == '__main__':
+>     manager.run()
+> #UploadSet对象有两个主要方法，file.save(xx)自动去找app.config[]中找路径，村进入。
+> #file.url(xx)找当前文件的路径，以便于给前端的模板传过去的。
+> ```
+>
+> ​	form.html
+>
+> ```python
+> <!DOCTYPE html>
+> <html lang="en">
+> <head>
+>     <meta charset="UTF-8">
+>     <title>修改头像</title>
+> </head>
+> <body>
+> {% if img_url %}
+>     <img src="{{ img_url }}" alt="">
+> {% endif %}
+> <form action="" method="post" enctype="multipart/form-data">
+>     <p>选择图像</p>
+>     <p><input type="file" name="file"></p>
+>     <p><input type="submit" value="submit"></p>
+> </form>
+> </body>
+> </html>
+> #注意：图片路径可以直接适用{{img_url}}。这儿的img_url不是后端拼接起来的全路径，或者只是图片的名称，而是通过img_url = file.url(fileName)这个api获取到的。
+> #file = UploadSet('photos',IMAGES) #上传文件对象配置。图片存储的路径，大小，类型都是在UploadSet这个类对象中配置。
+> ```
+
+**3、完整的文件上传**
+
+> ​	manage.py
+>
+> ```python
+> from flask import Flask,render_template
+> from flask_script import Manager
+> from flask_bootstrap import Bootstrap
+> from flask_wtf import FlaskForm
+> from flask_wtf.file import FileField,FileRequired,FileAllowed
+> from wtforms import SubmitField
+> from flask_uploads import UploadSet,configure_uploads,patch_request_class,IMAGES
+> import os
+> from PIL import Image
+> 
+> app = Flask(__name__)
+> app.config['SECRET_KEY'] = 'abcdef'
+> app.config['MAX_CONTENT_LENGTH'] = 1024*1024*64
+> app.config['UPLOADED_PHOTOS_DEST'] = os.path.join(os.getcwd(),'static/upload')
+> bootstrap = Bootstrap(app)
+> file = UploadSet('photos',IMAGES)
+> configure_uploads(app,file)
+> patch_request_class(app,size=None)
+> manager = Manager(app)
+> 
+> 
+> class Upload(FlaskForm):
+>     photos = FileField('上传头像',validators=[FileRequired(message='您还没有选择文件'),FileAllowed(file,message='请上传正确的格式的图片...')])
+>     submit = SubmitField('上传')
+> 
+> 
+> @app.route('/')
+> def index():
+>     return 'index'
+> 
+> #生成随机的图片名称
+> def random_name(suffix,length=32):
+>     import string, random
+>     Str = string.ascii_letters + '0123456789' #数字+字母的字符串
+>     return ''.join(random.choice(Str) for i in range(length))+'.'+suffix
+> #图片缩放
+> def img_zoom(path,width=300,height=200,prefix='s_'):
+>     # 图片缩放处理
+>     img = Image.open(path)
+>     print(img.size)  # 获取图片的大小
+>     # 重新设计图片大小
+>     img.thumbnail((width, height))
+>     #保存缩放后的新图片的路径（原图缩放后的图片都保存）
+>     newPath = os.path.join(os.path.split(path)[0],prefix+path.split('/')[-1])
+>     img.save(newPath)
+> 
+> @app.route('/upload/',methods=['GET','POST'])
+> def upload():
+>     form = Upload()
+>     img_url = None
+>     if form.validate_on_submit():
+>         photos = form.photos.data
+>         suffix = photos.filename.split('.')[-1]
+>         # print(suffix)
+>         while True:
+>             newName = random_name(suffix)
+>             path = os.path.join(app.config['UPLOADED_PHOTOS_DEST'], newName)
+>             if not os.path.exists(path):
+>                 break
+>         file.save(photos,name=newName)
+>         img_zoom(path)
+>         img_url = file.url(filename='s_'+newName)
+>     return render_template('form.html',form=form,img_url=img_url)
+> 
+> if __name__ == '__main__':
+>     manager.run()
+> ```
+>
+> ​	form.html
+>
+> ```python
+> {% extends 'bootstrap/base.html' %}
+> {% from 'bootstrap/wtf.html' import quick_form %}
+> {% block content %}
+>     {% if img_url %}
+>         <img src="{{ img_url }}" alt=""> 
+>     {% endif %}
+> {#    {{ quick_form(form,action=url_for('index'),method='GET') }}#}
+>     {{ quick_form(form) }}
+> {% endblock %}
+> ```
+
+#### 邮件发送
+
+**安装**
+
+> ```python
+> pip install flask-mail
+> ```
+
+**设置临时的环境变量**
+
+> ```python
+> windows   set 名=值
+> set 名
+> 如：
+> set MAIL_PASSWORD=123456
+> 
+> Ubuntu  export 名=值
+> echo $名
+> ```
+
+**同步发送**
+
+> (1) 概述：
+>
+> ```python
+> 同步发送，就是一条线程，只有右键真正发送成功了，页面才会显示弹框，发送成功！
+> ```
+>
+> (2) 示例：
+>
+> ```python
+> from flask import Flask,render_template_string
+> from flask_script import Manager
+> from flask_mail import Mail,Message
+> import os
+> 
+> app = Flask(__name__)
+> app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER','smtp.1000phone.com')
+> app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME','xialigang@1000phone.com')
+> app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD','123456')
+> 
+> mail = Mail(app)
+> manager = Manager(app)
+> 
+> @app.route('/')
+> def send_mail():
+>     msg = Message(subject='我是主题',recipients=['793390457@qq.com'],sender=app.config['MAIL_USERNAME'])
+>     msg.html = render_template_string('<h1>你好 我发邮件了</h1>')
+>     mail.send(message=msg)
+>     return '发送邮件'
+> 
+> if __name__ == '__main__':
+>     manager.run()
+> ```
+
+**异步发送**
+
+> (1) 概述：
+>
+> ```python
+> 异步发送，就是在发送邮件时候新建一条线程，主线程会直接执行完毕，显示发送成功了，新建线程慢慢执行发送邮件的过程。
+> ```
+>
+> (2) 示例：
+>
+> ```python
+> from flask import Flask,render_template
+> from flask_script import Manager
+> from flask_mail import Mail,Message
+> import os
+> from threading import Thread
+> #flask-sqlalchemy
+> app = Flask(__name__)
+> app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER','smtp.1000phone.com')
+> app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME','xialigang@1000phone.com')
+> app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD','123456')
+> mail = Mail(app)
+> manager = Manager(app)
+> 
+> def async_send_mail(msg):
+>     #程序上下文
+>     with app.app_context():
+>         mail.send(message=msg)
+> @app.route('/')
+> def send_mail():
+>     msg = Message(subject='我是主题',recipients=						
+>                   ['793390457@qq.com'],sender=app.config['MAIL_USERNAME'])
+>     msg.html = render_template('email.html')
+>     thr = Thread(target=async_send_mail,args=(msg,))
+>     thr.start()
+>     return '发送邮件'
+> 
+> if __name__ == '__main__':
+>     manager.run()
+> ```
+
+#### 操作数据库
+
+**1、flask-sqlalchemy**
+
+> (1) 概述：
+>
+> ```python
+> flask作为一个MVT框架 支持ORM    
+> 随着项目越来越大  如果使用原生sql
+> 
+> 1. 原生SQL重复使用率不大  代码越长   出现很多相似的SQL 语句
+> 2. 很多SQL语句  都是在业务逻辑中拼接出来的   如果数据库发生了改变  就要去修改这些逻辑    就会容易出现遗漏某个SQL的修改
+> 3. 在写SQL 的时候  容易忽略安全问题  SQL注入
+> 
+> 使用ORM：
+> 1. 减少了重复SQL的几率    写出来的代码更加直观和清晰
+> 2. 可移植性    支持对多个数据库的链接的操作
+> 3. 使用灵活  可以很方便的写出SQL语句
+> 4. ORM最终还是转换成SQL语句去操作数据库
+> 
+> 注意：
+> 如果数据库使用的是默认的latin1字符编码 则插入中文 结果为报错 或者是值为???   
+> 1. 删除数据库
+> 2. 改库的编码  表的编码 表中没=每个char或者varchar的字段类型改为 utf8
+> ```
+>
+> (2) 使用sqlalchemy操作原生SQL：
+>
+> ​	安装
+>
+> ```python
+> pip install pymysql
+> pip install flask-sqlalchemy
+> ```
+>
+> ​	示例：
+>
+> ```python
+> from sqlalchemy import create_engine
+> HOST = '127.0.0.1'
+> USERNAME = 'root'
+> PASSWORD = '123456'
+> PORT = 3306
+> DATABASE = 'demo'
+> DB_URI = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(USERNAME,PASSWORD,HOST,PORT,DATABASE)
+> engine = create_engine(DB_URI)
+> with engine.connect() as con:
+>     con.execute('create table user(id int,username varchar(255))')
+>     con.execute('sql语句')
+> ```
+>
+> (3)	使用flask-SQLalchemy
+
+#### 注意
+
+**1、manager.py文件的作用**
+
+> ```python
+> 如果只是单个文件来执行，以显示前台页面，则随便起名字，比如起名字为test，则在终端写入命令为：
+> python test.py runserver -d -r
+> 因为python只是编译该文件的命令
+> ```
+
+**2、window和linux下路径中斜杠的不同**
+
+> ```python
+> 1、在window下一定要用：flask.config['UPLOADED_PHOTOS_DEST']= 								os.path.join(os.getcwd(),'static\\upload')
+> 	效果是：H:\desktop\flaskProject\day05\static\upload\13I3q1VM3AXtlMaDWApmT1mjRExMuWzK.jpg
+>     而且，prefix+path.split('\\')[-1])可以成功
+>     如果用'/'则效果是有反斜杠，有正斜杠，而且path.split('/')[-1])什么都获取不到
+> 2、在模板中，正常用斜杠就好：<img src="{{ url_for('static',filename='upload/mei.jpg') }}">
+> 3、如果是linux的话，不存在这个问题
+> ```
+
+**3、基本知识注意点**
+
+> ```python
+> 注意：
+> 	1、各个蓝本中，比如url.py、car.py中写的是各自模块的路由，然后统一在manage.py中注册
+> 	2、创建某个模块的蓝本对象的时候，第一个参数的作用，是在蓝本之间跳转的时候，的一个标识。
+> 		比如：car = Blueprint('car',__name__); -->存在于car.py模块中
+> 		在另一个蓝本中，不用导入from car import car，就可以redirect(url_for('car.index'))
+> 		可见：car并不是对象，而是蓝本管理的'car'标识，index是car.py模块中的视图函数  
+> 	3、通过print(render_template('index.html')) --> 其中from flask import render_template
+> 		index.html存在于templates目录下。
+> 		可以从打印中看到，并不是return render_temlate('index.html',title='我是首页')是跳转到		index.html中的，而是把index.html模板拿过来，渲染，返回去浏览器的。
+> ```
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```python
+1、return redirect(url_for('index'))不要忘写return了,url_for()参数不要忘了加引号
+2、模板中是get_flashed_messages()，要加s
+3、注意：
+base.html
+    {% block content %}
+        <div class="container">
+            {% for info in get_flashed_messages() %}
+                <div class="alert alert-warning alert-dismissible" role="alert">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">						<span aria-hidden="true">&times;</span></button>
+                  <p>{{ info }}</p>
+                </div>
+            {% endfor %}
+
+            {% block page_content %}
+
+            {% endblock %}
+        </div>
+    {% endblock %}
+boot-quick-form.html
+	{% extends 'common/base.html' %}
+    {% from 'bootstrap/wtf.html' import quick_form %}
+    {% block page_content %}
+    {#    <h1>{{ get_flashed_messages() }}</h1>#}
+        {{ quick_form(form) }}
+    {% endblock %}
+#则此处一定是 {% block page_content %}，而不是{% block container %}否则直接把警告框也覆盖了
+4、request也需要导入,from flask inport request
+5、    if request.method == 'POST' and 'pic' in request.files:
+        file = request.files.get('pic')
+        filename = file.filename
+        print(filename)
+        suffix = filename.split('.')[-1]
+        if allow_file(suffix):
+            file.save(os.path.join(flask.config['UPLOAD_DEST'],filename))    
+    注意：if request.method == 'POST' and 'pic' in request.files:这儿的'pic'是input的name属性值
+```
+
+如果form标签下的method不写，即使url传参，request.args获取。
+
+直接F5刷新，输入url都是get
+
+app.config['SECRET_KEY']='abcdef'
+导入：
+from flask import session
+
+session也需要secret_key秘钥，作用就是加密。比如form表单提交，如果别人查看源码，自己写一个form表单，看到url则自己提交就可以了。有csrf就不会这样了。
+
+所以目前，secret_key有两个地方需要：
+
+一是：session需要
+
+二是：flaskForm的csrf-token需要
+
+模板中{{form.user.label()}}：form是后端的form=Login()对象，username是该对象的属性，label是属性的属性，应为Username是对象StringField()
+
+
+
+```python
+    {% if img_url %}{# 注意：原生的文件上传，不能用{{ img_url }}，而flask-upload扩展库可以 #}
+        <img src="{{ url_for('static',filename='upload/'+img_url) }}">
+    {% else %}
+        <img src="{{ url_for('static',filename='upload/mei.jpg') }}">
+    {% endif %}
+```
+
+
+
+```
+import string
+```

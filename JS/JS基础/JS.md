@@ -11,7 +11,7 @@
   更好的办法：去掉选择按钮，在选择框数值一旦改变的时候 ，就自动触发查询，这个时候，导出也完全可以从页面拿         值。即使是有本年、本月的按钮，也可以在点击后，从css等方面，加状态。导出的时候，获取状态拿值，而		不需要写入隐藏域中
 ```
 
-#### 单选框触发事件
+#### radio触发事件
 
 ```python
 <label>第一个</label>
@@ -66,3 +66,4 @@
 	return new ModelAndView("com/jeecg/statisticsquery/salesSortieRank/salesSortieRankTree");
 ```
 
+http://www.cnblogs.com/rose1324/p/8513650.html

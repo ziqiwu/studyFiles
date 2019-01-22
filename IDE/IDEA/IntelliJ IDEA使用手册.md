@@ -20,60 +20,89 @@
 
 #### eclipse项目迁移
 
-```python
-第一步：导入
-1、如果怕搞坏eclipse项目，复制一份该项目到一个目录
-2、一路Next
-	File --> New --> Project from Existing Sources --> Import project from external model 
-	--> Eclipse --> Next --> Keep project and moduals files in --> 复制到的那个目录 --> Next --> 	Open Project Struture after import(打勾都行) --> Next --> Use default project code style 
-    --> Next --> Name -->JDK 1.7 --> JDK home path --> 自己的JDK安装路径 --> Finish
-第二步：设置项目属性
-1、注意：在Libraries中可以看到爆红的项，删除掉，点加号，重新导入，不是maven管理也可以。
-2、项目右键 --> Open Module Settings --> 
-	project --> Project compilter output --> H:\desktop\cnafSelfControl\out(项目名后面加out，表
-	示out目录存放编译后的文件) -->
-	
-    Modules --> Dependencies --> 爆红的选中删掉，即点右侧的减号
-    (org.eclipose.jst.j2ee.internal.web.container和		
-	org.eclipose.jst.j2ee.internal.module.container) --> 剩余的全部勾选 --> Apply
-    
-    Libraries --> 中可以看到爆红的项，删除掉，点加号，重新导入，不是maven管理也可以。
-	如果在设置里面，maven设置里面，设置了会下载jar包的Classes、Sources、JavaDocs，则Libraries里		面的后两项有的jar包没有，就会后两项爆红，删掉后两项即可，不会影响使用。
-	如果后续build项目有报错找不到jar包，则再返回来导入
-    
-    Facets --> 加号 --> Web --> 选中项目 --> Deployment Descriptors --> path --> 点铅笔 --> 项目中
-    选到web.xml --> Web Resource Directories --> H:\desktop\cnafSelfControl\WebContent -->
-    source root --> create Artifacts --> Name --> 改成项目名称，这个名称是"http://ip:port/项名/"中
-    的项目名 --> Available Elements --> 项目右键 --> put into output root --> Apply 
-第三步：设置服务器属性
-1、Run --> Edit Configurations --> Name --> 起一个名字 --> Deployment --> 加号 --> Artifacts -->
-	Server --> URL中可以看到http://localhost:8082/cnafSelfControl/ --> 其中的canfSelfControl
-	就是Open Module Settings的Artifacts中的Name --> Apply --> Run
+> ​	最新
+>
+> ```python
+> 大神解释：https://www.cnblogs.com/jajian/p/8081640.html
+> 1、问题：web.xml中报错，显示"Inspection info: Checks if all servlets have mappings"
+> 解决：
+> 	src/main/java --> Mark Directory as --> Sources Root
+> 	src/main/resource --> Mark Directory as --> Resources Root
+> 	src/test/java --> Mark Directory as --> Test Resources Root
+> 	注意：其实这一步应该在import项目的时候，在modules步骤标识
+>     
+> 2、问题：加所有jar包
+> 解决：
+> 	ctrl + alt + shift + S --> Modules --> Dependencies --> jar包全部删掉
+> 	Libraries --> 加号 --> 把导入项目的lib整包选中
+> 	注：如果还要加单独的jar包，在Modules --> Dependencies --> 点加号
+> 	然后，在Artifacts --> Available Elements --> 右键Put into Output Root，因为左侧的<output 	 root>里面有lib的目录。(所以需要重新Put into Output Root)
+> 
+> 3、问题：给单个文件改编码格式
+> 解决：
+> 	选中单个文件 --> File --> File Encoding 
+>     
+> 4、问题：编译后的classes文件和artifacts文件生成的路径
+> 解决：
+> 	这两列文件都是在building之后，即第一次跑服务器之后，生成的。
+> 	我的artifacts放在out路径，编译后的classes文件放在build文件夹下。
+> ```
+>
+> ​	菜鸟手册
+>
+> ```python
+> 第一步：导入
+> 1、如果怕搞坏eclipse项目，复制一份该项目到一个目录
+> 2、一路Next
+> 	File --> New --> Project from Existing Sources --> Import project from external model 
+> 	--> Eclipse --> Next --> Keep project and moduals files in --> 复制到的那个目录 --> Next 	 --> 	Open Project Struture after import(打勾都行) --> Next --> Use default project 		code style 
+>     --> Next --> Name -->JDK 1.7 --> JDK home path --> 自己的JDK安装路径 --> Finish
+> 第二步：设置项目属性
+> 1、注意：在Libraries中可以看到爆红的项，删除掉，点加号，重新导入，不是maven管理也可以。
+> 2、项目右键 --> Open Module Settings --> 
+> 	project --> Project compilter output --> H:\desktop\cnafSelfControl\out(项目名后面加		out，表示out目录存放编译后的文件) 
+>     
+>     Libraries --> 中可以看到爆红的项，删除掉，点加号，重新导入，不是maven管理也可以。
+> 	如果在设置里面，maven设置里面，设置了会下载jar包的Classes、Sources、JavaDocs，则Libraries里	 面的后两项有的jar包没有，就会后两项爆红，删掉后两项即可，不会影响使用。
+> 	如果后续build项目有报错找不到jar包，则再返回来导入
+>     
+>     Facets --> 加号 --> Web --> 选中项目 --> Deployment Descriptors --> path --> 点铅笔 --> 		项目中选到web.xml --> Web Resource Directories --> H:\desktop\cnafSelfControl\WebContent 	--> source root --> create Artifacts --> Name --> 改成项目名称，这个名是"http://ip:port/	项名/"中的项目名 --> Available Elements --> 项目右键 --> put into output root --> Apply 
+>         或者
+>     Facets --> 空白即可
+> 第三步：设置服务器属性
+> 1、Run --> Edit Configurations --> Name --> 起一个名字 --> Deployment --> 加号 --> Artifacts 		-->
+> 	Server --> URL中可以看到http://localhost:8082/cnafSelfControl/ --> 其中的canfSelfControl
+> 	就是Open Module Settings的Artifacts中的Name --> Apply --> Run
+> ```
+>
+> ​	菜鸟注意
+>
+> ```python
+> 注意：
+> 1、新加一个jar包，在Artifacts的Avalible Elements下的项目，右键，Put into Output Root，新加的jar		包就会加入到左侧的output root下的WEB-INF下的lib中
+> 2、跑起来tomcat，报错没有找到zookeeper的包里面的类，我打开lib下面确实没有，则：
+> 	项目右键 --> Open Module Settings --> Modules --> 右侧加号 --> 单独把zookeeper.jar放到桌面		导入
+> 3、Tomcat 配置时点加号，不要点templates
+> 4、run --> edit configurations --> deployment --> 加号 --> artifacts
+> 5、项目 --> 右键 --> open models settings是重点，根据网友博客内容走 --> 				
+> 	https://blog.csdn.net/eaphyy/article/details/72513914
+> 	https://blog.csdn.net/pzasdq/article/details/52537337
+> 6、搞了半天，网上百度了半天，误打误撞出来了
+> 	(1)访问地址：http://localhost:8082/xjymHandle_war_exploded/index.html，而不是		
+>             http://localhost:8082/xjymHandle_war_exploded/index.html
+> 	(2)我重新run --> tomcat server --> local --> 加号 --> name --> tomcat7.0.65_2
+> 		deployment --> 加号 --> artifacts
+> 		server --> url --> 自动生成的http://localhost:8082/xjymHandle_war_exploded/
+> 	(3)比如想把路径改成http://localhost:8082/xjymHandleWar/则需要：
+> 		第一步：项目右键 --> open models settings
+> 		第二步：artifacts --> Name --> 改为xjymHandleWar
+> 		第三步：新建一个本地的tomcat server --> deploymnet --> 加号 --> artifacts --> 名字已改			变 --> server --> 默认路径已改变
+> 7、eclipse项目导入idea一共两步：
+> 	第一步：项目右键 --> open models settings配置项目
+> 	第二步：run --> edit configurations 配置tomcat server
+> ```
 
-注意：
-1、新加一个jar包，在Artifacts的Avalible Elements下的项目，右键，Put into Output Root，新加的jar包就	会加入到左侧的output root下的WEB-INF下的lib中
-2、跑起来tomcat，报错没有找到zookeeper的包里面的类，我打开lib下面确实没有，则：
-	项目右键 --> Open Module Settings --> Modules --> 右侧加号 --> 单独把zookeeper.jar放到桌面导入
-3、Tomcat 配置时点加号，不要点templates
-4、run --> edit configurations --> deployment --> 加号 --> artifacts
-5、项目 --> 右键 --> open models settings是重点，根据网友博客内容走 --> 				
-	https://blog.csdn.net/eaphyy/article/details/72513914
-	https://blog.csdn.net/pzasdq/article/details/52537337
-6、搞了半天，网上百度了半天，误打误撞出来了
-	(1)访问地址：http://localhost:8082/xjymHandle_war_exploded/index.html，而不是		
-            http://localhost:8082/xjymHandle_war_exploded/index.html
-	(2)我重新run --> tomcat server --> local --> 加号 --> name --> tomcat7.0.65_2
-		deployment --> 加号 --> artifacts
-		server --> url --> 自动生成的http://localhost:8082/xjymHandle_war_exploded/
-	(3)比如想把路径改成http://localhost:8082/xjymHandleWar/则需要：
-		第一步：项目右键 --> open models settings
-		第二步：artifacts --> Name --> 改为xjymHandleWar
-		第三步：新建一个本地的tomcat server --> deploymnet --> 加号 --> artifacts --> 名字已改变 
-        	--> server --> 默认路径已改变
-7、eclipse项目导入idea一共两步：
-	第一步：项目右键 --> open models settings配置项目
-	第二步：run --> edit configurations 配置tomcat server
-```
+
 
 #### eclipse的maven项目迁移
 
@@ -176,7 +205,7 @@ https://blog.csdn.net/westos_linux/article/details/78968012
 ```python
 一、tab页分行显示
 	Window --> Editor Tabs --> Tabs placement --> Show Tabs in Single Row --> 去掉对勾
-二、字体、北京、样式等设置
+二、字体、背景、样式等设置
 	第一步：代码样式
     	File --> Settings --> Editor --> Font --> 右侧Font --> DejaVu Sans Mono
     第二步：编辑器样式
@@ -198,88 +227,6 @@ https://blog.csdn.net/westos_linux/article/details/78968012
 	第三步：适合自己的主题风格
     	Nice Python
 
-```
-
-#### 快捷键
-
-```python
-1、生成getter、setter方法 
-	alt + insert 
-	注意：锁掉小键盘，0键就是insert键
-2、鼠标跳出括号 
-	跳出双引号：shift + "
-    跳出单引号：shift + '
-    跳出括号：shift + )
-    跳出中括号：shift + ]
-	以此类推
-3、复制一行
-	ctrl + D
-4、删除一行
-	ctrl + Y
-5、关闭Tab页面
-	shift + click(mouse)
-6、调整 --> 箭头跳至上一次代码位置
-	https://blog.csdn.net/u010814849/article/details/76682701/
-```
-
-
-
-#### 运行报错
-
-```python
-一、运行maven的项目，点击tomcat的run报错
-   	问题：Error:Cannot build artifact 'ssm:war exploded' because it is included into a circular 		dependency
-	解决：在Open Module Settings的Artifacts中，有三个Artiface，分别是
-		cnafInterfaceService
-		cnafInterfaceService:war
-		cnafInterfaceService:war exploded
-         删掉后两个，因为希望url中是http://ip:port/cnafInterfaceService/
-二、debug某maven的项目，报错
-	问题：source code does not match the bytecode
-    	我的问题是一个maven项目，通过maven依赖另一个maven项目。被依赖的项目通过maven的install指令打成		Jar包。可是一运行依赖别的项目的这个项目，就包奇怪的错误，比如：sql中某个标识符无效，可是我的sql		中压根没有这个字段好伐。
-		被逼无奈，只能debug，这可好，不debug还好，一debug报的错越是压根没有见到过。就是上面写道的：
-		source code does not match the bytecode
-		百度之后，大家的解决办法，大都是把项目重新build，重新编译。我把被依赖的项目重新build，重新			install，把依赖别的项目的这个项目也重新build。运行，还是不行
-	解决：然后，在我打开依赖别的项目的这个项目的open moduals settings的Artifacts的时候，赫然又看到，			Artifacts又变成了三个
-		cnafInterfaceService
-		cnafInterfaceService:war
-		cnafInterfaceService:war exploded
-		然后就是和第一个问题一样，把后两个全部删掉，再运行，OK了
-	后记：可能出现Artifacts变成三个的原因，我回想了一下之前的操作，我把改项目也进行了rebuild，可能是重		新编译的时候，出现了好几个Artifacts。
-三、右键项目Rebuild Module报错
-	问题：java source 1.5中不支持diamond 运算符(eclipse导入IDEA)
-		比如在代码上Map<String,Object> map = new HashMap<>()，
-		eclipse中的Map<String,Object> map = new HashMap<String,Object>()变成了上面的，
-		这个运算符就叫diamond运算符(钻石运算符)
-	解决：项目 --> 右键 --> Open Module Settings --> Modules --> Language level -->
-		发现是5 - 'enum' keyword, generics, autoboxing etc. -->
-		下拉选择为 --> 7 - Diamonds, ARM, multi-catch etc.  --> Apply --> OK 
-四、打开IDEA之后，maven项目一直在updating indices，花费很长时间
-	方案一：
-    	删除文件夹 --> C:\Users\Administrator\.IntelliJIdea2018.3\system\caches
-		对我的情况效果不大
-    方案二：
-    	和方案一类似，在caches上下手
-		File --> Invalidate Caches / Restart --> Validate and Restart
-		对我的情况效果不大
-    方案三：
-		分别在项目的几个文件夹：plug-in、swftools、zgis等文件夹上 --> 右键 --> Mark Directory as
-		--> Exclusion
-		update indices不再对这几个文件夹进行检测。因为这几个文件夹我不用，而且每次都花费绝大时间。		
-        注意：该方法需要注意，选择了exclude是因为你的模块开发不需要这部分文件。如果你的模块运行是需要这			些文件的，千万不能标记为exclude，因为build项目/tomcat run时候的自动build，都不会包含这部分文		  件。
-         
-         比如:我把pulg-in标记成了exclude，连登录页面样式都扭曲了，而且登录的jQuery的函数也不能用，页
-           面F12查看，一堆找不到resource --> Failed to load resource: the server responded with a 		   status of 404 (Not Found):bootstrap.css/jquery-1.8.3.min.js/jquery.cookie.js等等
-		 
-         所以：上面标记的时候，不能包括plugin-in这个文件夹
-五、软件一段时间就闪退
-	问题：打开项目多的时候，特别是里面有大项目的时候，就会发生软件闪退。把IDEA安装包下的bin下的				idea64.exe.vmoptions和idea64.exe.vmoptions中的-Xmx最大内存改为1024m。没有解决问题
-	解决：是因为用补丁破解的IDEA的原因，用第三方服务器破解就可以搞定
-		东云网首页就有置顶的方法
-		http://www.pydyun.com/
-六、JSP页面标签处报错
-	问题：原来在eclipse中显示正常的jsp页面，在idea的div结束标签处爆红，显示：Element span is not 			closed。可是原来正常，而且span的没有结束标签，你在div结束标签处给我报错，我猜想肯定是idea的设			置出错。
-	解决：最后还百度下了plugins中jsp的一个插件，没有效果，最后在这个爆红的div中果真找到了其中一个span标		  签结束标签写错了。写成了<span>排序方式<span>。idea够强大的，检查够仔细，但是能在span处报错就更		   好了。
 ```
 
 #### indexing在干嘛
