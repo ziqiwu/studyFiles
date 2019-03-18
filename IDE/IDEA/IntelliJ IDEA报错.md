@@ -60,5 +60,99 @@
 	解决：最后还百度下了plugins中jsp的一个插件，没有效果，最后在这个爆红的div中果真找到了其中一个span标		  签结束标签写错了。写成了<span>排序方式<span>。idea够强大的，检查够仔细，但是能在span处报错就更		   好了。
 ```
 
+#### tomcat运行中文乱码
+
+> ```python
+> 网上一大堆对我没有用处
+> 解决：
+> 	第一步：Settings --> Editor --> File Encoding --> 全部选择为UTF-8
+> 	第二步：Run --> Edit Configurations --> VM Opations 加 -Dfile.encoding=UTF-8
+> ```
+
+#### 控制台中文乱码
+
+> ```python
+> 网上一大堆对我没有用处
+> 解决：
+> 	第一步：Help --> Edit Custom VM Options --> 粘一份idea/bin/idea.exe64.vmoptions的内容 --> 		末尾加-Dfile.encoding=UTF-8
+> 	第二步：重启idea
+> 注：直接改idea/bin/idea.exe64.vmoptions，即末尾加-Dfile.encoding=UTF-8是没有用的，因为idea引用	  的是C:\Users\用户名\.IntelliJIdea2018.1\config\idea64.exe.vmoptions文件。
+>     验证的话，打开c盘下的这个文件，改了之后，再打开Help下的，就可以看到已经改过了。
+> 万分注意：
+> 	在tomcat的edit configurations里的VM options里面一定要加-Dfile.encoding=UTF-8
+> ```
+
+#### 打war包多了WEB-INF
+
+> ```python
+> 问题：打出来的war包解压之后，发现WEB-INF -> classes包中又有一个WEB-INF文件夹，还很大。
+> 解决：
+> 	第一步：ctrl+alt+shift+S --> Modules --> Sources --> WebContent下的WEB-INF标识为Excluded
+> 		--> Apply
+> 	第二步：Artifacts中按步骤打出war包，然后就可以发现输出的war包中，解压后不再有多余的WEB-INF了
+> ```
+
+#### Project Structures报错
+
+> ```python
+> Modules --> cnafWeather和Web都可以点击，点击开后配置内容也不一样
+> 	web.xml和WebContent都自己点击重新配置
+> Libraries --> 点加号，只加一个项目的lib包
+> ```
+>
+
+#### 闪退无法启动
+
+> ```python
+> 弹框内存溢出，修改了idea.exe.vmoptions文件，将最大内存改大了之后，IDEA无法启动，直接闪退。
+> 问题解决：
+> 	来源http://www.bubuko.com/infodetail-2728044.html
+> 修改内存的方法：
+> 	https://jingyan.baidu.com/album/f25ef254b56549482c1b8290.html?picindex=3
+> 后记：
+> 	无语吐槽，上面的解决办法，只是在错误的道路上躲避那些小坑。
+> 	现在回归正途，方法就是下一条<修改内存无效>所记录的。
+> 	小小透露一下：闪退的原因，是因为.exe文件找错了。
+>                  而不是因idea是破解版，或者其他什么原因。就是内存不够，闪退而已
+> ```
+
+#### 修改内存无效
+
+> ```python
+> 使用错误点很多：
+> 	第一：安装完成之后，bin目录下有两个启动文件，idea.exe和idea64.exe。我把它的路径加在了环境变量           中，一直用cmd的idea启动。这是错误的。正确姿势是：idea.exe是给32位电脑系统用的，                   idea64.exe是给64位电脑系统用的。所以我应该用cmd的idea64启动。
+>     第二：接上面第一的话题，pycharm的目录中也是类似的结构。我现在的pycharm的bin目录下只有一个               pycharm64.exe，我记得当初安装的过程中是有一个选项的。
+>     第三：直接点击idea64.exe，报错could not find main class com/intellij/idea/main
+>           解决办法为：环境变量中新建一个IDEA_JDK_64，值和JAVA_HOME的值一样，然后引入Path中。
+>           因为idea启动的时候，会优先扫描环境变量中的该值。
+>           https://blog.csdn.net/baidu_28665563/article/details/80911930
+> 	第四：修改内存有三种办法，
+> 		 我使用的Help --> Diagnostic --> Change memory settings
+>           提示我-Xmx最大到800m，默认是750m，he value should be less than 800 for 32 bit                 system，可是我的电脑明明是64位的。原因就是上面的第一所述，启动文件用错了，我应该用                 idea64.exe来启动idea。用idea64.exe启动后，再重复上面的步骤，发现最大可以到1125，我改为
+>           2048后，重启也没问题。
+> 	第五：JVM的四个参数的函数
+> 		-Xmx Java Heap最大值
+> 		-Xms Java Heap初始值
+> 		-Xmn Java Heap Young区大小
+> 		-Xss 每个线程的Stack大小
+> 		https://blog.csdn.net/yydriver/article/details/81107950
+> 	第六：diagnostic 美[ˌdaɪəgˈnɑ:stɪk] adj.诊断的  n.诊断法	
+> ```
+>
+
+#### build报找不到目录
+
+> ```python
+> 新包上面，右键，make directory as --> unmarked resources root，然后再标记为resources root。应该是idea没有反应过来。先解除标识，再标识。就好了
+> ```
+
+#### 热部署没有效果
+
+> ```python
+> tomcat中设置了update classes and resources的热部署后，启动必须是按那个小虫子启动，就是必须是debug模式下，热部署才会生效。
+> ```
+
+
+
 
 

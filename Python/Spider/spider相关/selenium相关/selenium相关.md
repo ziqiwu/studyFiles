@@ -137,13 +137,5 @@
 ```python
 1、浏览器设置代理
 	chrome --> 设置 --> 搜索'代理' --> 打开代理设置 --> HTTP(H)和安全(S)都改为网上的代理IP和PORT
-2、新浪微博的登录页面
-https://passport.weibo.cn/signin/welcome?entry=mweibo&r=https%3A%2F%2Fpad.weibo.cn%2F%3Fsudaref%3Dwww.baidu.com%26display%3D0%26retcode%3D6102&sudaref=www.baidu.com&display=0&retcode=6102&_T_WM=4680b0fcfbeda5b3095f6e98de7d731c
-    上面是错的，下面是打开的正确姿势
-https://passport.weibo.cn/signin/login
-    因为post参数中有一个参数，表示从哪个页面跳过来的。如果用第一个，会超级多，没法用
-    
-    
-错错错，完全错了 --> 用第一个完全搞定，用第二个反而各种报错。而且第一个都不用把里面的https什么的在url编码解码里面改一下。直接放在代码里就可以搞定了。
 ```
 

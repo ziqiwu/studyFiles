@@ -54,10 +54,19 @@
 
 #### 安装
 
-> (1) 服务：
+> #### 服务
 >
 > ```python
 > net start mysql --> 启动服务命令
 > net stop mysql --> 关闭服务命令
 > ```
 >
+> #### cmd连接mysql
+>
+> ```python
+> mysql -u root -p 
+> 注意：
+> 	不要少了杠，变成mysql uroot -p
+> ```
+>
+> 

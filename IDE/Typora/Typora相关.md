@@ -18,6 +18,7 @@ https://www.tmxmall.com/aligner
 3、打开关闭左侧大纲 --> ctrl + shift + 1
 4、代码块中一行，快速定位行首 --> ctrl + delete
 5、去除不用的空的代码块，即```python创建的代码块 --> 只需要连点删除键就可以了。
+6、多个窗口，快速切换 --> ctrl + Tab
 ```
 
 #### 疑难杂症

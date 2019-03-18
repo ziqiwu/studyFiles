@@ -2,64 +2,73 @@
 
 ------
 
-#### 生成getter、setter方法 
+#### 快速操作的方法和快捷键
 
 > ```python
-> alt + insert 
-> 注意：锁掉小键盘，0键就是insert键
+> 1、生成getter、setter方法
+> 	alt + insert 
+> 	注意：锁掉小键盘，0键就是insert键
+> 2、生成代try-catch
+> 	Ctrl+Alt+T
+> 	注意：这个用法可以普遍生成逻辑语句的前后块。用法是先写好语句块，然后再按快捷键，逻辑语句就会自动	包括代码块
+> 3、生成方法体的{}
+> 	ctrl + shift + Enter
+> 	注意：这个用法可以普遍用来补全单个代码结构，比如方法体的大括号，类的大括号，代码句的分号。
+> 4、导入import类
+> 	Alt + Enter
+> 5、自动生成自己定义的方法
+> 	alt + Enter
+> 	注意：先写好没有定义的方法名称和参数，然后按快捷键。
+> 6、在方法中快速增加，调用方法时新增的参数
+> 	alt + Enter
+> 7、复制一行
+> 	ctrl + D
+> 8、删除一行
+> 	ctrl + Y
+> 9、鼠标跳出括号
+> 	跳出双引号：shift + "
+> 	跳出括号：shift + )
+> 	跳出中括号：shift + ]
+> 	以此类推
+> 	注意：跳出单引号''不是shift + '而是直接点单引号键就可以
+> 10、关闭Tab页面
+> 	shift + click(mouse)
+> 11、直接进入某个项目文件在工作空间中的位置
+> 	该文件 --> 右键 --> Show in Explorer
+> 12、箭头跳至上一次代码位置
+> 	https://blog.csdn.net/u010814849/article/details/76682701/	
+> 13、打开Settings页面
+> 	ctrl + alt + S
+> 14、打开Project Structure
+> 	ctrl + alt + shift + S
+> 15、格式化代码
+> 	ctrl + alt + L
+> 16、重命名
+> 	shift + f6
+> 17、代码提示
+> 	ctrl + shift + 空格
+> 18、鼠标箭头跳至下一行
+> 	ctrl + shift + Enter
+> 19、运行main方法
+> 	ctrl + shift + f10
+> 20、替换和全部替换
+> 	ctrl + R
+> 21、生成main方法
+> 	psvm --> public static void main
+> 22、找到某个接口的实现类
+> 	ctrl + alt + B
+> 23、某个类在整个项目中所有应用到的地方
+> 	alt + f7 --> 操作是鼠标箭头在类名上
 > ```
 
-#### 生成代try-catch
+#### 定位java文件在项目中的位置
 
 > ```python
-> Ctrl+Alt+T
+> 左侧，最上方，Project的右边有一个方向盘一样的标识，鼠标悬浮显示"scroll from sources"
 > ```
+>
 
-#### 鼠标跳出括号 
 
-> ```python
-> 跳出双引号：shift + "
-> 跳出括号：shift + )
-> 跳出中括号：shift + ]
-> 以此类推
-> 注意：跳出单引号''不是shift + '而是直接点单引号键就可以
-> ```
-
-#### 复制一行
-
-> ```python
-> ctrl + D
-> ```
-
-#### 删除一行
-
-> ```python
-> ctrl + Y
-> ```
-
-#### 关闭Tab页面
-
-> ```python
-> shift + click(mouse)
-> ```
-
-#### 导入import类
-
-> ```python
-> Alt + Enter
-> ```
-
-#### 直接进入某个项目文件在工作空间中的位置
-
-> ```python
-> 该文件 --> 右键 --> Show in Explorer
-> ```
-
-#### 箭头跳至上一次代码位置
-
-> ```python
-> https://blog.csdn.net/u010814849/article/details/76682701/
-> ```
 
 
 

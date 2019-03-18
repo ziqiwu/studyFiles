@@ -4,19 +4,27 @@
 
 #### 下载破解
 
-```python
-下载：idea官网：https://www.jetbrains.com/idea/
-注意：32-bit的jdk在安装的时候，需要勾选，否则启动IDEA的时候有问题
-激活：http://www.pydyun.com/idea-activation-localization.html#respond
-方法一：注册码激活
-	下载安装完成IDEA(安装过程不需要安装javax86)，弹出激活窗口，选择注册码，在lanyu网址
-	http://idea.lanyus.com/最下方点击获取注册码，添加即可，到2019年5月
-方法二：本地搭建激活服务器
-	尝试未果
-方法三：破解补丁激活
-	我之所以卸载之前的IDEA就是应为，运行大项目idea会闪退，网友提供的原因，可能是补丁破解的后遗症。
-	所以也就不尝试第二遍了。
-```
+> #### 尝试最新教程
+>
+> ```python
+> https://blog.csdn.net/active_it/article/details/80669423
+> ```
+>
+> #### 之前
+>
+> ```python
+> 下载：idea官网：https://www.jetbrains.com/idea/
+> 注意：32-bit的jdk在安装的时候，需要勾选，否则启动IDEA的时候有问题
+> 激活：http://www.pydyun.com/idea-activation-localization.html#respond
+> 方法一：注册码激活
+> 	下载安装完成IDEA(安装过程不需要安装javax86)，弹出激活窗口，选择注册码，在lanyu网址
+> 	http://idea.lanyus.com/最下方点击获取注册码，添加即可，到2019年5月
+> 方法二：本地搭建激活服务器
+> 	尝试未果
+> 方法三：破解补丁激活
+> 	我之所以卸载之前的IDEA就是应为，运行大项目idea会闪退，网友提供的原因，可能是补丁破解的后遗症。
+> 	所以也就不尝试第二遍了。
+> ```
 
 #### eclipse项目迁移
 
@@ -48,61 +56,13 @@
 > 	我的artifacts放在out路径，编译后的classes文件放在build文件夹下。
 > ```
 >
-> ​	菜鸟手册
+> ​	注意
 >
 > ```python
-> 第一步：导入
-> 1、如果怕搞坏eclipse项目，复制一份该项目到一个目录
-> 2、一路Next
-> 	File --> New --> Project from Existing Sources --> Import project from external model 
-> 	--> Eclipse --> Next --> Keep project and moduals files in --> 复制到的那个目录 --> Next 	 --> 	Open Project Struture after import(打勾都行) --> Next --> Use default project 		code style 
->     --> Next --> Name -->JDK 1.7 --> JDK home path --> 自己的JDK安装路径 --> Finish
-> 第二步：设置项目属性
-> 1、注意：在Libraries中可以看到爆红的项，删除掉，点加号，重新导入，不是maven管理也可以。
-> 2、项目右键 --> Open Module Settings --> 
-> 	project --> Project compilter output --> H:\desktop\cnafSelfControl\out(项目名后面加		out，表示out目录存放编译后的文件) 
->     
->     Libraries --> 中可以看到爆红的项，删除掉，点加号，重新导入，不是maven管理也可以。
-> 	如果在设置里面，maven设置里面，设置了会下载jar包的Classes、Sources、JavaDocs，则Libraries里	 面的后两项有的jar包没有，就会后两项爆红，删掉后两项即可，不会影响使用。
-> 	如果后续build项目有报错找不到jar包，则再返回来导入
->     
->     Facets --> 加号 --> Web --> 选中项目 --> Deployment Descriptors --> path --> 点铅笔 --> 		项目中选到web.xml --> Web Resource Directories --> H:\desktop\cnafSelfControl\WebContent 	--> source root --> create Artifacts --> Name --> 改成项目名称，这个名是"http://ip:port/	项名/"中的项目名 --> Available Elements --> 项目右键 --> put into output root --> Apply 
->         或者
->     Facets --> 空白即可
-> 第三步：设置服务器属性
-> 1、Run --> Edit Configurations --> Name --> 起一个名字 --> Deployment --> 加号 --> Artifacts 		-->
-> 	Server --> URL中可以看到http://localhost:8082/cnafSelfControl/ --> 其中的canfSelfControl
-> 	就是Open Module Settings的Artifacts中的Name --> Apply --> Run
-> ```
->
-> ​	菜鸟注意
->
-> ```python
-> 注意：
-> 1、新加一个jar包，在Artifacts的Avalible Elements下的项目，右键，Put into Output Root，新加的jar		包就会加入到左侧的output root下的WEB-INF下的lib中
-> 2、跑起来tomcat，报错没有找到zookeeper的包里面的类，我打开lib下面确实没有，则：
-> 	项目右键 --> Open Module Settings --> Modules --> 右侧加号 --> 单独把zookeeper.jar放到桌面		导入
-> 3、Tomcat 配置时点加号，不要点templates
-> 4、run --> edit configurations --> deployment --> 加号 --> artifacts
-> 5、项目 --> 右键 --> open models settings是重点，根据网友博客内容走 --> 				
-> 	https://blog.csdn.net/eaphyy/article/details/72513914
-> 	https://blog.csdn.net/pzasdq/article/details/52537337
-> 6、搞了半天，网上百度了半天，误打误撞出来了
-> 	(1)访问地址：http://localhost:8082/xjymHandle_war_exploded/index.html，而不是		
->             http://localhost:8082/xjymHandle_war_exploded/index.html
-> 	(2)我重新run --> tomcat server --> local --> 加号 --> name --> tomcat7.0.65_2
-> 		deployment --> 加号 --> artifacts
-> 		server --> url --> 自动生成的http://localhost:8082/xjymHandle_war_exploded/
-> 	(3)比如想把路径改成http://localhost:8082/xjymHandleWar/则需要：
-> 		第一步：项目右键 --> open models settings
-> 		第二步：artifacts --> Name --> 改为xjymHandleWar
-> 		第三步：新建一个本地的tomcat server --> deploymnet --> 加号 --> artifacts --> 名字已改			变 --> server --> 默认路径已改变
-> 7、eclipse项目导入idea一共两步：
+> eclipse项目导入idea一共两步：
 > 	第一步：项目右键 --> open models settings配置项目
 > 	第二步：run --> edit configurations 配置tomcat server
 > ```
-
-
 
 #### eclipse的maven项目迁移
 
@@ -168,15 +128,23 @@ https://blog.csdn.net/xzjayx/article/details/83142167
 
 #### MAVEN
 
-```python
-https://blog.csdn.net/westos_linux/article/details/78968012
-第一步：下载maven
-第二步：配置maven-repository
-第三步：修改settings.xml中的mirror镜像地址，改为aliyun的镜像
-第四步：修改IDEA中的maven配置
-	1、File --> Settings --> Maven --> User settings file --> 勾选Override --> 地址改为自己的			settings.xml地址
-	2、Local repository --> 勾选Override --> 地址改为自己的maven-repository地址
-```
+> #### 项目配置
+>
+> ```python
+> https://blog.csdn.net/westos_linux/article/details/78968012
+> 第一步：下载maven
+> 第二步：配置maven-repository
+> 第三步：修改settings.xml中的mirror镜像地址，改为aliyun的镜像
+> 第四步：修改IDEA中的maven配置
+> 	1、File --> Settings --> Maven --> User settings file --> 勾选Override --> 地址改为自己的			settings.xml地址
+> 	2、Local repository --> 勾选Override --> 地址改为自己的maven-repository地址
+> ```
+>
+> #### 全局默认配置
+>
+> ```python
+> File --> Other Settings --> Settings for new projects --> 搜索MAVEN
+> ```
 
 #### SVN
 
@@ -208,6 +176,7 @@ https://blog.csdn.net/westos_linux/article/details/78968012
 二、字体、背景、样式等设置
 	第一步：代码样式
     	File --> Settings --> Editor --> Font --> 右侧Font --> DejaVu Sans Mono
+		Line spacing --> 1.1(本人有密集恐惧症啊)
     第二步：编辑器样式
     	File --> Appearance & Behavior --> Appearance --> Theme --> High contrast --> 
     	use custom font --> DejaVu Sans Mono --> Size --> 14 --> Background Image -->
@@ -226,7 +195,14 @@ https://blog.csdn.net/westos_linux/article/details/78968012
     	File --> Settings --> Editor --> Color Scheme --> Scheme --> 选择下载的jar包
 	第三步：适合自己的主题风格
     	Nice Python
-
+四、标志修改文件为星号
+	简介：IDEA默认是自动保存的，这儿设置关闭自动保存和标志修改文件为星号
+	第一步：
+    	File—>settings—->System Settings—>去掉勾选synchronize files on frame or editor tab 				activation和去掉勾选save files on frame deactivation 
+	第二步：
+    	File—->Settings—–>Editor—->General—->Editor tabs—->勾选 mark modified files as asterisk 
+	来源：
+    	https://blog.csdn.net/wangjun5159/article/details/55223630/
 ```
 
 #### indexing在干嘛
@@ -306,7 +282,18 @@ IDEA：方法简单
 	--> Lifecycle --> deployment --> 会在输出信息中有下面的一条信息    
 	[INFO] Building war: H:\desktop\新建文件夹(2)\cnafInterfaceService\target\
 	cnafInterfaceService.war的信息
-	--> 到对应文件路径可以找到该war包    
+	--> 到对应文件路径可以找到该war包   
+二、普通项目
+	https://blog.csdn.net/wdsdads/article/details/80778802
+	【注】：
+	问题：打出来的war包解压之后，发现WEB-INF -> classes包中又有一个WEB-INF文件夹，还很大。
+	解决：
+	第一步：ctrl+alt+shift+S --> Modules --> Sources --> WebContent下的WEB-INF标识为Excluded
+		--> Apply
+	第二步：Artifacts中按步骤打出war包，然后就可以发现输出的war包中，解压后不再有多余的WEB-INF了
+		Artifacts --> + --> Web Application:Archive --> Empty --> Output Directory路径改为桌面
+		--> Available Elements都右键选到左侧 --> META-INF/MENIFECT.MF选择已有的 --> Apply
+		然后 Build --> Build Artifacts --> 搞定
 ```
 
 #### 热部署
@@ -320,6 +307,44 @@ https://blog.csdn.net/j_u_n1991/article/details/78859211
 	On frame deactivation:Update classes and resources
 	注意：1代表手动点击更新动作时（可用快捷键ctrl+F9），编译更新代码和资源； 2代表idea失去焦点时     
 ```
+
+#### 单文件和整个项目编码格式
+
+**单文件**
+
+> ```python
+> 选中java文件 --> File --> File Encoding
+> ```
+
+**整个项目**
+
+> ```python
+> File --> Settings --> Editor --> File Encoding --> Path和Encoding中把Path选中为整个项目，Encoding选中为utf-8
+> ```
+
+#### 打开IDEA创建的已存在的项目
+
+> ```python
+> file --> new --> project from existing sources
+> ```
+
+#### SVN管理界面找不到
+
+> ```python
+> VCS --> Enable Version Control Integration... --> Select a version control system to associate with the project root --> 下拉选择Subversion --> 界面底部出现Version Control子页
+> 注：
+> 	intergration  美 [ˌɪntɪˈɡreʃən]  整合;一体化;结合;
+> 	associate with    与…交往，联系
+> ```
+
+#### 快速进入jar源码目录
+
+> ```python
+> 快速进入依赖jar包的某个类的目录，
+> 	比如spring-boot的jar包中的FilterRegistrationBean类
+> 	在文件的第一行，找到package org.springframework.boot.web.servlet;，
+> 	然后ctrl+点击最后一个单词servlet，就可以快速进入该目录中。
+> ```
 
 
 
