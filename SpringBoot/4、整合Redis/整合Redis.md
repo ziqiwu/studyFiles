@@ -89,13 +89,16 @@
 > 	来源：https://www.cnblogs.com/jtestroad/p/8031850.html
 > ```
 
-#### 3、整合Redis
+#### 3、整合单机Redis
 
 > #### 官网
 >
 > ```python
-> 官网：https://docs.spring.io/spring-boot/docs/2.1.0.BUILD-									SNAPSHOT/reference/htmlsingle/#boot-features-redis
-> 集群文档：https://docs.spring.io/spring-data/data-redis/docs/current/reference/html/#cluster
+> 官网：
+> 	参考 "官网文档" 章节
+> 	#boot-features-redis
+> 集群文档：
+> 	https://docs.spring.io/spring-data/data-redis/docs/current/reference/html/#cluster
 > ```
 >
 > #### 整合redis
@@ -213,11 +216,138 @@
 > 	对应的方法分别是opsForValue()、opsForList()、opsForHash()、opsForSet()、opsForZSet()
 > ```
 
-#### 4、Redis工具类封装
+#### 4、单机Redis工具类封装
 
 > #### 注意
 >
 > ```python
-> redis的key值的命名规范：按层级用冒号分开。比如basic:user:11，则在可视化工具中，将按层级生成文件夹，basic是一个文件夹，展开，user是一个文件夹。而且这样的命名，查询的效率更高。
+> redis的key值的命名规范：按层级用冒号分开。比如basic:user:11，则在'可视化工具'中，将按'层级'生成
+> '文件夹'，basic是一个文件夹，展开，user是一个文件夹。而且这样的命名，查询的效率更高。
 > ```
+
+#### 5、整合Redis主从+哨兵
+
+> #### 大神文章
+>
+> ```python
+> 1>	不同redis客户端连接池的配置
+> 	https://blog.csdn.net/qq_31256487/article/details/83144088
+> 2> RedisTemplate操作Redis
+> 	大神1：https://www.cnblogs.com/EasonJim/p/7803067.html
+> 	大神2：https://www.cnblogs.com/superfj/p/9232482.html
+> ```
+>
+> #### 整合
+>
+> ```python
+> 大神文章：
+> 	更多详细配置及使用，详见 "大神文章"
+> 配置方法：
+> 	第一步：springboot整合redis相关依赖引入   -- 参考注意
+> 	第二步：配置application.yml
+> 	第三步：代码连接redis，操作redis
+> 实战如下：
+> 	1、配置application.yml
+> 		spring:  
+> 			redis:
+> 				# 连接超时时间（毫秒）
+> 				timeout: 5000
+> 				password: 123456
+> 				#采用哪个数据库
+> 				database: 0
+> 				sentinel:
+> 					master: s1
+> 					#三个哨兵的端口
+> 					nodes: 192.168.1.125:26379,192.168.1.125:26380,192.168.1.126:26379
+> 					pool:
+> 						# 连接池最大连接数,默认8个，（使用负值表示没有限制）
+> 						max-active: 8
+> 						# 连接池最大阻塞等待时间（使用负值表示没有限制）
+> 						max-wait: -1
+> 						# 连接池中的最大空闲连接
+> 						max-idle: 8
+> 						# 连接池中的最小空闲连接
+> 						min-idle: 0
+> 	2、代码操作redis
+> 		@Autowired
+>     	private StringRedisTemplate stringRedisTemplate;
+> 		@GetMapping(value = "/v1/redis/get")
+>     	public Object redisGet() {
+>         	String gender = stringRedisTemplate.opsForValue().get("gender");
+>         	return JsonData.buildSuccess(gender);
+>     	}
+> 注意：
+> 	如果redis使用lettuce连接池，则需要
+>     1、增加pom依赖
+> 		<!-- lettuce pool 缓存连接池 -->
+>         <dependency>
+>             <groupId>org.apache.commons</groupId>
+>             <artifactId>commons-pool2</artifactId>
+>         </dependency>
+> 	2、重新配置RedisConfig
+> 	3、来源：https://blog.csdn.net/qq_31256487/article/details/83144088
+> ```
+>
+
+#### 6、整合Redis-cluster
+
+> #### 大神文章
+>
+> ```python
+> 1>	不同redis客户端连接池的配置
+> 	https://blog.csdn.net/qq_31256487/article/details/83144088
+> 2> RedisTemplate操作Redis
+> 	大神1：https://www.cnblogs.com/EasonJim/p/7803067.html
+> 	大神2：https://www.cnblogs.com/superfj/p/9232482.html
+> ```
+>
+> #### 整合
+>
+> ```python
+> 大神文章：
+> 	更多详细配置及使用，详见 "大神文章"
+> 配置方法：
+> 	第一步：springboot整合redis相关依赖引入   -- 参考注意
+> 	第二步：配置application.yml
+> 	第三步：代码连接redis，操作redis
+> 实战如下：
+> 	1、配置application.yml
+> 		spring:
+>             redis:
+>                 timeout: 6000
+>                 password: 123456
+>                 cluster:
+>                   # 获取失败 最大重定向次数 
+>                   max-redirects: 3
+>                   nodes:
+>                     - 39.105.32.104:1111
+>                     - 39.105.32.104:2222
+>                     - 39.105.32.104:3330
+>                     - 39.105.32.104:4440
+>                     - 39.105.32.104:5555
+>                     - 39.105.32.104:6666
+>                 lettuce:
+>                   pool:
+>                     #连接池最大连接数（使用负值表示没有限制）
+>                     max-active: 1000
+>                     # 连接池中的最大空闲连接
+>                     max-idle: 10
+>                     # 连接池中的最小空闲连接
+>                     min-idle: 5
+>                     # 连接池最大阻塞等待时间（使用负值表示没有限制）
+>                     max-wait: -1ms
+> 	2、代码操作：
+> 		--参见整合Redis主从+哨兵。操作代码是一样的
+> 注意：
+> 	如果redis使用lettuce连接池，则需要
+>     1、增加pom依赖
+> 		<!-- lettuce pool 缓存连接池 -->
+>         <dependency>
+>             <groupId>org.apache.commons</groupId>
+>             <artifactId>commons-pool2</artifactId>
+>         </dependency>
+> 	2、重新配置RedisConfig
+> 	3、来源：https://blog.csdn.net/qq_31256487/article/details/83144088
+> ```
+>
 

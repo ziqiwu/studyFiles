@@ -72,6 +72,32 @@
 
 #### CentOS7防火墙操作
 
+> #### 防火墙命令
+>
+> ```python
+> 1、安装
+> 	yum install firewalld
+> 	yum install firewall-config   --如果需要使用图形化配置工具
+> 	注意：wget只是获取源码的压缩包。yum是直接安装。
+> 2、启动
+> 	systemctl start firewalld
+> 3、停止
+> 	systemctl stop firewalld
+> 4、停止
+> 	systemctl restart firewalld
+> 5、查询状态
+> 	systemctl status firewalld
+> 	或
+> 	firewall-cmd --state
+> 6、启用开机自动启动
+> 	systemctl enable firewalld
+> 7、禁用开机自动启动
+> 	systemctl disable firewalld
+> 8、查看自动启动状态
+> 	systemctl is-enabled firewalld
+> 注意：来源https://www.cnblogs.com/bldly1989/p/7209632.html
+> ```
+>
 > #### 开放、关闭端口
 >
 > ```python
@@ -118,31 +144,6 @@
 > 追加4：permanent 美[ˈpɜ:rmənənt]  adj.永久（性）的，永恒的，不变的	
 > ```
 >
-> #### 常用命令
->
-> ```python
-> 1、安装
-> 	yum install firewalld
-> 	yum install firewall-config   --如果需要使用图形化配置工具
-> 	注意：wget只是获取源码的压缩包。yum是直接安装。
-> 2、启动
-> 	systemctl start firewalld
-> 3、停止
-> 	systemctl stop firewalld
-> 4、停止
-> 	systemctl restart firewalld
-> 5、查询状态
-> 	systemctl status firewalld
-> 	或
-> 	firewall-cmd --state
-> 6、启用开机自动启动
-> 	systemctl enable firewalld
-> 7、禁用开机自动启动
-> 	systemctl disable firewalld
-> 8、查看自动启动状态
-> 	systemctl is-enabled firewalld
-> 注意：来源https://www.cnblogs.com/bldly1989/p/7209632.html
-> ```
 
 #### CentOS6防火墙操作
 

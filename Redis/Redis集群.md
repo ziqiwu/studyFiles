@@ -11,8 +11,8 @@
 > 	2、容量问题，单实例redis内存无法无限扩充，达到32G后就进入了64位世界，性能下降。
 > 	3、并发性能问题，redis号称单实例10万并发，但也是有尽头的。
 > 	来源：http://www.cnblogs.com/kerwinC/p/6611634.html
-> 2、为了达到redis的高可用，有两种部署方式
-> 	主从复制+哨兵机制；集群模式。
+> 2、为了达到redis的高可用，有四种部署方式
+> 	主从复制+哨兵机制；集群模式(服务器分片)；集群服务(客户端分片)；集群模式(twenproxy)
 > 	哨兵机制是redis2.8开始支持。
 > 	集群模式是redis3.0开始支持。
 > 	来源：https://blog.csdn.net/ls1645/article/details/78931605
@@ -103,15 +103,16 @@
 >             port 2221
 >             slaveof 192.168.1.125  1111 
 >             requirepass 123456 (可选)
+>         	masterauth 123456 (可选)
 >             #protected-mode yes (可选)
 >         2222下的：
 >             port 2222
 >             slaveof 192.168.1.125  1111 
 >             requirepass 123456 (可选)
+>             masterauth 123456 (可选)
 >             #protected-mode yes (可选)
 >         redis.conf的：
 >             port 2220
->             slaveof 192.168.1.125  1111 
 >             requirepass 123456 (可选)
 >             #protected-mode yes (可选)
 >     4> 防火墙给2220/2221/2222三个端口都放行
@@ -150,6 +151,7 @@
 > 准备工作：
 > 	1> 台机器，我用的是虚拟机
 > 	2> 每台机器都安装了redis，都开放了端口，可以互相联通
+> 	3> CentOS6 + Redis4.x    
 > 步骤：
 > 	1> 每台机器，都是启动3个redis实例(进程)，1主2从。
 > 		注：如果不知道同一机器启动多个实例，请参考主从配置(两台机器+四个实例)
@@ -165,9 +167,32 @@
 > 	https://blog.csdn.net/qq_37853817/article/details/78961462
 > ```
 >
+> #### 模拟主机宕机，观察配置文件变化
+>
+> ```python
+> 步骤：
+> 	1> 192.168.1.125 1110是主机，端口1111和1112是从机
+> 	2> redis都启动，sentinel都启动
+> 	3> kill -9 1110的进程ID
+> 	4> 观察发现sentinel选取1111做了主机。
+> 检查文件：
+> 	1> 1111下的redis.conf的slaveof 192.168.1.125 1110和masterauth 123456都不见了
+> 	2> 1112下的redis.conf的slaveof 192.168.1.125 1110变为了192.168.1.125 1111
+> 	3> 1110对应的redis.conf，在文件末尾增加 slaveof 192.168.1.125 1111，但是masterauth没有加
+> ```
+>
 > #### 备注
 >
 > ```python
+> 0、网上的配置：sentinel.conf配置文件(后台运行，日志输入文件)，没有测试
+>     bind 0.0.0.0
+>     port 5000    #Sentinel 服务的端口
+>     daemonize yes
+>     logfile "/var/log/redis/sentinel.log"
+>     sentinel monitor mymaster 127.0.0.1 6379 1  # Quorum取比总数/2大的最小整数即可，这里是1
+>     sentinel down-after-milliseconds mymaster 5000
+>     sentinel failover-timeout mymaster 60000
+>     sentinel auth-pass mymaster toor  # Redis服务的密码
 > 1、sentinel.conf文件内容
 > 	port 26379
 > 	dir /tmp 
@@ -188,88 +213,395 @@
 > 
 > 	protected-mode no
 > 	更多sentinel.conf配置信息：https://blog.csdn.net/u012441222/article/details/80751390
->         
+> 2、正常启动sentinel后控制台输出：
+>     WARNING: The TCP backlog setting of 511 cannot be enforced because 							/proc/sys/net/core/somaxconn is set to the lower value of 128.
+>     Sentinel ID is a205465e1f45a8fcacef281867ec4fbe878af04e
+>     
+>     +monitor master s1 192.168.1.125 1110 quorum 2
+>     +monitor master s2 192.168.1.126 2220 quorum 2
+>     
+>     +slave slave 192.168.1.125:1111 192.168.1.125 1111 @ s1 192.168.1.125 1110
+>     +slave slave 192.168.1.125:1112 192.168.1.125 1112 @ s1 192.168.1.125 1110
+>     +slave slave 192.168.1.126:2221 192.168.1.126 2221 @ s2 192.168.1.126 2220
+>     +slave slave 192.168.1.126:2222 192.168.1.126 2222 @ s2 192.168.1.126 2220
+>     
+>     +sentinel sentinel 5a23c4b855b70685ba15d22a3bc0aa8f8e0949af 192.168.1.125 26380 @ s1 		192.168.1.125 1110
+>     +sentinel sentinel 5a23c4b855b70685ba15d22a3bc0aa8f8e0949af 192.168.1.125 26380 @ s2 		192.168.1.126 2220
+>     +sentinel sentinel 07794ef8f9a5258a46d094b4a3e18af7c80871e4 192.168.1.125 26379 @ s1 		192.168.1.125 1110
+>     +sentinel sentinel 07794ef8f9a5258a46d094b4a3e18af7c80871e4 192.168.1.125 26379 @ s2 		192.168.1.126 2220
+> 	注：
+> 		启动的时候，redis标识下面会有端口和进程号，这个启动的哨兵端口为：26379，ip是192.168.126
+> 	注解：
+> 		1> monitor监工两个
+> 		2> slave从机共四个
+> 		3> 列出另外两个哨兵，都监控着那两台主机
+> 		4> 输出控制台所在的主机实例ID在Sentinel ID后面有
+> ```
+>
+> #### 哨兵控制台输出内容详解
+>
+> ```python
+> 备注：
+> 	+sdown 信息加入监控系统
+> 	-sdown 信息从监控系统中解除
+> 步骤：
+> 	第一步：停掉192.168.1.126 26379的哨兵
+> 	第二步：重启192.168.1.126 26379的哨兵
+> 	第三步：停掉192.168.1.126 2220的主机
+> 	第四步：修改192.168.1.126的主机配置文件redis.conf，即打开masterauth的注释，并启动
+> 输出：
+>     #备注：本控制台窗口对应的是192.168.1.125 26379哨兵服务，一共三个哨兵，25两个，26一个
+> -------------------------------------------------------------------------------------------
+>     2007:X 18 Mar 12:08:52.977 # WARNING: The TCP backlog setting of 511 cannot be enforced 		because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+>     
+>     #输出：本哨兵的ID
+>     2007:X 18 Mar 12:08:53.090 # Sentinel ID is ff85a7e54cb318792cbe717a181b3a351a15df8b
+>     
+>     #输出：规则--两个监工，同时监控两个主机实例ip+port，法定人数2人才能投票生效
+>     2007:X 18 Mar 12:08:53.090 # +monitor master s2 192.168.1.126 2220 quorum 2
+>     2007:X 18 Mar 12:08:53.090 # +monitor master s1 192.168.1.125 1110 quorum 2
+>     
+>     #输出：所有从机+隶属于的主机 
+>     2007:X 18 Mar 12:08:53.097 * +slave slave 192.168.1.126:2221 192.168.1.126 2221 @ s2 		192.168.1.126 2220
+>     2007:X 18 Mar 12:08:53.100 * +slave slave 192.168.1.126:2222 192.168.1.126 2222 @ s2 		192.168.1.126 2220
+>     2007:X 18 Mar 12:08:53.102 * +slave slave 192.168.1.125:1111 192.168.1.125 1111 @ s1 		192.168.1.125 1110
+>     2007:X 18 Mar 12:08:53.105 * +slave slave 192.168.1.125:1112 192.168.1.125 1112 @ s1 		192.168.1.125 1110
+>     
+>     #输出：除了本哨兵外的其余哨兵+哨兵监控的主机 -- 本哨兵的信息，第一行有ID，redis-logo有PID和		port。监控对象当然也是这两个主机。如果想查看自己的+sentinel sentinel 信息，则跳转到另两个		哨兵的启动窗口。
+>     #输出：哨兵125 26380 监控主机s1 125 1110
+>     2007:X 18 Mar 12:08:53.461 * +sentinel sentinel 											19c83deac9d59b847356e43a3492ce47436fb96d 192.168.1.125 26380 @ s1 192.168.1.125 		1110
+>     #输出：哨兵125 26380 监控主机s2 126 2220
+>     2007:X 18 Mar 12:08:53.465 * +sentinel sentinel 											19c83deac9d59b847356e43a3492ce47436fb96d 192.168.1.125 26380 @ s2 192.168.1.126 		2220
+> 	#输出：哨兵126 26379 监控主机s1 125 1110
+>     2007:X 18 Mar 12:08:59.606 * +sentinel sentinel 											ca089181c5653475a1008c639841b8b33db1057e 192.168.1.126 26379 @ s1 192.168.1.125 		1110
+> 	#输出：哨兵126 26379 监控主机s2 126 2220
+>     2007:X 18 Mar 12:08:59.610 * +sentinel sentinel 											ca089181c5653475a1008c639841b8b33db1057e 192.168.1.126 26379 @ s2 192.168.1.126 		2220
+> 	#备注：以上为启动信息 
+> 	#操作：停掉192.168.1.126 26379的哨兵
+> -------------------------------------------------------------------------------------------
+> 	#输出：哨兵126 26379监控126 2220主机的服务宕机。+sdown sentinel表示(宕机发生)
+>     2007:X 18 Mar 12:09:47.488 # +sdown sentinel ca089181c5653475a1008c639841b8b33db1057e 			192.168.1.126 26379 @ s2 192.168.1.126 2220
+>     #输出：哨兵126 26379监控125 1110主机的服务宕机。+sdown sentinel表示(宕机发生)
+>     2007:X 18 Mar 12:09:47.489 # +sdown sentinel ca089181c5653475a1008c639841b8b33db1057e 			192.168.1.126 26379 @ s1 192.168.1.125 1110
+>  
+> 	#操作：重启192.168.1.126 26379的哨兵
+> -------------------------------------------------------------------------------------------
+> 	#输出：哨兵126 26379监控126 2220主机的服务重启(对应上面ID)。-sdown sentinel表示(宕机解决)
+>     2007:X 18 Mar 12:10:26.961 # -sdown sentinel ca089181c5653475a1008c639841b8b33db1057e 			192.168.1.126 26379 @ s2 192.168.1.126 2220
+>     #输出：哨兵126 26379监控125 1110主机的服务重启(对应上面ID)。-sdown sentinel表示(宕机解决)
+>     2007:X 18 Mar 12:10:26.961 # -sdown sentinel ca089181c5653475a1008c639841b8b33db1057e 			192.168.1.126 26379 @ s1 192.168.1.125 1110
+>     
+>     #原来的哨兵ID，地址失效
+>     2007:X 18 Mar 12:10:28.284 * +sentinel-invalid-addr sentinel 								  ca089181c5653475a1008c639841b8b33db1057e 192.168.1.126 26379 @ s2 192.168.1.126 			2220
+>     #重新对126 26379哨兵生成ID
+>     2007:X 18 Mar 12:10:28.284 * +sentinel-address-update sentinel 								  ca089181c5653475a1008c639841b8b33db1057e 192.168.1.126 0 @ s2 192.168.1.126 2220 			 1 additional matching instances
+>     #126 26379哨兵用新的ID监控主机126 2220
+>     2007:X 18 Mar 12:10:28.284 * +sentinel sentinel 											  111ff1d8c93e49440013aa1dd7ac718f86ec857e 192.168.1.126 26379 @ s2 192.168.1.126   		  2220
+> 	#126 26379哨兵用新的ID监控主机126 1110
+>     2007:X 18 Mar 12:10:28.286 * +sentinel sentinel 											  111ff1d8c93e49440013aa1dd7ac718f86ec857e 192.168.1.126 26379 @ s1 192.168.1.125 			1110
+> 	#停掉192.168.1.126 2220的主机             
+> -------------------------------------------------------------------------------------------
+> 	#输出：        
+>     2007:X 18 Mar 12:10:57.937 # +sdown sentinel ca089181c5653475a1008c639841b8b33db1057e 			192.168.1.126 0 @ s2 192.168.1.126 2220
+>     2007:X 18 Mar 12:10:57.937 # +sdown sentinel ca089181c5653475a1008c639841b8b33db1057e 			192.168.1.126 0 @ s1 192.168.1.125 1110
+>     2007:X 18 Mar 12:20:29.537 # +sdown master s2 192.168.1.126 2220
+>     2007:X 18 Mar 12:20:29.590 # +odown master s2 192.168.1.126 2220 #quorum 3/2
+>     2007:X 18 Mar 12:20:29.590 # +new-epoch 1
+>     2007:X 18 Mar 12:20:29.590 # +try-failover master s2 192.168.1.126 2220
+>     2007:X 18 Mar 12:20:29.704 # +vote-for-leader ff85a7e54cb318792cbe717a181b3a351a15df8b 			1
+>     2007:X 18 Mar 12:20:29.707 # 111ff1d8c93e49440013aa1dd7ac718f86ec857e voted for 			111ff1d8c93e49440013aa1dd7ac718f86ec857e 1
+>     2007:X 18 Mar 12:20:30.381 # 19c83deac9d59b847356e43a3492ce47436fb96d voted for 			111ff1d8c93e49440013aa1dd7ac718f86ec857e 1
+>     2007:X 18 Mar 12:20:31.282 # +config-update-from sentinel 									111ff1d8c93e49440013aa1dd7ac718f86ec857e 192.168.1.126 26379 @ s2 192.168.1.126 		2220
+> 	
+>     #主机从126 2220切换为126 2222
+>     2007:X 18 Mar 12:20:31.282 # +switch-master s2 192.168.1.126 2220 192.168.1.126 2222
+>     
+>     #126 2221修改隶书关系，126 2220修改为从机，增加隶书关系
+>     2007:X 18 Mar 12:20:31.284 * +slave slave 192.168.1.126:2221 192.168.1.126 2221 @ s2 		192.168.1.126 2222
+>     
+>     #修改192.168.1.126的主机配置文件redis.conf，即打开masterauth的注释，并启动
+>     #注意：不能直接启动，因为哨兵已经把主从机的redis.conf文件都改过了
+> -------------------------------------------------------------------------------------------
+>     #系统增加一个从机126 2220
+>     2007:X 18 Mar 12:20:31.284 * +slave slave 192.168.1.126:2220 192.168.1.126 2220 @ s2 		192.168.1.126 2222
+>     2007:X 18 Mar 12:21:01.312 # +sdown slave 192.168.1.126:2220 192.168.1.126 2220 @ s2 		192.168.1.126 2222
+>     2007:X 18 Mar 12:27:54.645 # -sdown slave 192.168.1.126:2220 192.168.1.126 2220 @ s2 		192.168.1.126 2222
+> 测试借鉴：
+> 	https://blog.csdn.net/u013820054/article/details/52036383
+> ```
+>
+> #### 报错
+>
+> ```python
+> 1、启动sentinel控制台输出：
+>     错误：
+>         2730:X 17 Mar 16:31:01.009 # WARNING: The TCP backlog setting of 511 cannot be 				enforced because /proc/sys/net/core/somaxconn is set to the lower value of 				128.
+>         2730:X 17 Mar 16:31:01.009 # Sentinel ID is211cad3d91800a05c7a60b29afc63d6acbac15f2
+>         2730:X 17 Mar 16:31:01.009 # +monitor master s1 192.168.1.125 1110 quorum 2
+>         2730:X 17 Mar 16:31:01.009 # +monitor master s2 192.168.1.126 2220 quorum 2
+>         2730:X 17 Mar 16:31:31.019 # +sdown master s1 192.168.1.125 1110
+>         2730:X 17 Mar 16:31:31.019 # +sdown master s2 192.168.1.126 2220
+>     错误原因：
+>         +sdown master表示两台主机都没有连接成功
+>         猜测是没有加密码验证，即：
+>             sentinel auth-pass s1 123456 
+>             sentinel auth-pass s2 123456
+>         一开始配置：
+>             port 26379
+>             sentinel monitor s1 <ip地址> 6379 2
+>             sentinel monitor s2 <ip地址> 6379 2
+>             protected-mode no
+>         后改为：
+>             port 26379
+>             dir /tmp 
+>             sentinel monitor s1 192.168.1.125 1110 2
+>             sentinel monitor s2 192.168.1.126 2220 2
+> 
+>             sentinel auth-pass s1 123456 
+>             sentinel auth-pass s2 123456
+> 
+>             sentinel down-after-milliseconds s1 30000
+>             sentinel down-after-milliseconds s2 30000
+> 
+>             sentinel parallel-syncs s1 1
+>             sentinel parallel-syncs s2 1
+> 
+>             sentinel failover-timeout s1 180000
+>             sentinel failover-timeout s2 180000
+> 
+>             protected-mode no
 > 2、启动sentinel控制台输出：
-> 错误：
-> 	2730:X 17 Mar 16:31:01.009 # WARNING: The TCP backlog setting of 511 cannot be enforced 		because /proc/sys/net/core/somaxconn is set to the lower value of 128.
->     2730:X 17 Mar 16:31:01.009 # Sentinel ID is 211cad3d91800a05c7a60b29afc63d6acbac15f2
->     2730:X 17 Mar 16:31:01.009 # +monitor master s1 192.168.1.125 1110 quorum 2
->     2730:X 17 Mar 16:31:01.009 # +monitor master s2 192.168.1.126 2220 quorum 2
->     2730:X 17 Mar 16:31:31.019 # +sdown master s1 192.168.1.125 1110
->     2730:X 17 Mar 16:31:31.019 # +sdown master s2 192.168.1.126 2220
-> 正确：
->     3869:X 18 Mar 07:42:54.044 # WARNING: The TCP backlog setting of 511 cannot be enforced 		because /proc/sys/net/core/somaxconn is set to the lower value of 128.
->     3869:X 18 Mar 07:42:54.047 # Sentinel ID is db2a019c614318639e2afdc86fab1f5b0d1ba5f3
->     3869:X 18 Mar 07:42:54.047 # +monitor master s2 192.168.1.126 2220 quorum 2
->     3869:X 18 Mar 07:42:54.047 # +monitor master s1 192.168.1.125 1110 quorum 2
->     3869:X 18 Mar 07:42:54.049 * +slave slave 192.168.1.126:2221 192.168.1.126 2221 @ s2 		192.168.1.126 2220
->     3869:X 18 Mar 07:42:54.051 * +slave slave 192.168.1.126:2222 192.168.1.126 2222 @ s2 		192.168.1.126 2220
->     3869:X 18 Mar 07:42:54.053 * +slave slave 192.168.1.125:1111 192.168.1.125 1111 @ s1 		192.168.1.125 1110
->     3869:X 18 Mar 07:42:54.055 * +slave slave 192.168.1.125:1112 192.168.1.125 1112 @ s1 		192.168.1.125 1110
-> 错误原因：
-> 	猜测是没有加密码验证，即：
->         sentinel auth-pass s1 123456 
->         sentinel auth-pass s2 123456
-> 	一开始配置：
-> 		port 26379
-> 		sentinel monitor s1 <ip地址> 6379 2
-> 		sentinel monitor s2 <ip地址> 6379 2
-> 		protected-mode no
-> 	后改为：
-> 		port 26379
-> 		dir /tmp 
-> 		sentinel monitor s1 192.168.1.125 1110 2
-> 		sentinel monitor s2 192.168.1.126 2220 2
-> 
-> 		sentinel auth-pass s1 123456 
-> 		sentinel auth-pass s2 123456
-> 
-> 		sentinel down-after-milliseconds s1 30000
-> 		sentinel down-after-milliseconds s2 30000
-> 
-> 		sentinel parallel-syncs s1 1
-> 		sentinel parallel-syncs s2 1
-> 
-> 		sentinel failover-timeout s1 180000
-> 		sentinel failover-timeout s2 180000
-> 
-> 		protected-mode no
-> ```
->
-> 
-
-#### 3、集群模式
-
-> ```python
-> http://www.cnblogs.com/kerwinC/p/6611634.html
+>     错误：
+>         +sdown sentinel 77e955bf8a8983618ee084d1023ff627090f1187 
+>     错误原因：
+>         猜测是防火墙或者端口的问题
+>         25两个哨兵都正常启动
+>         26一个哨兵老是错误。
+>         区别：
+>             26的三个从机端口也开放了，25只开放了主机端口 -- 端口猜测
+>             26的防火墙配置和25的防火墙配置也不一样 -- 防火墙猜测
+>         控制变量：
+>             25和26的redis.conf和sentinel.conf都是一样的
+>     解决：
+>         开放了25的所有端口
+>         关掉了26的防火墙和selinux
 > ```
 
-#### 4、集群开机自启动
+#### 3、集群模式(服务器分片)
 
-> ```python
-> 
-> ```
-
-#### 5、集群 3主机0从机--待测试
-
-> #### 简介
+> #### 前言
 >
 > ```python
-> 前言：
-> 	目的：
-> 		如果使用redis集群只是为了容量扩展，则不需要从机。
-> 	原因：
-> 		从机是用来主从复制的。
->         
-> 测试redis部署模式：
-> 	集群模式
-> 	主从复制+哨兵机制，本来就是依赖于从机自动替换主机的，如果没有从机，还部署个什么劲儿。
+> 来源：
+> 	https://blog.csdn.net/qq_42815754/article/details/82912130
 > ```
->
 > #### 实战
 >
 > ```python
+> 主备工作：
+> 	1> 安装redis完成 -- 参考redis基础
+> 	2> 各节点联通测试完毕，本地和redis节点联通测试完毕
+> 步骤：
+> 	1> 安装redis节点
+> 		注* redis同级目录
+> 		1、mkdir redis-cluster
+> 		2、cd redis-cluster
+> 		3、将redis目录下的安装内容给6个新建文件夹都考一份。命令参考：
+> 			cp -r redis/redis-4.0.9/ redis-cluster/redis01  *如果没有redis01文件夹会自动创建
+> 		4、将6个新建子文件夹中的快照文件dump.rdb删除。命令参考：
+> 			rm -rf dump.rdb
+> 		5、修改6个新建子文件夹中redis.conf，一共两处
+> 			① port xxxx
+> 			② cluster-enabled yes
+> 			注* 我在搭建过程中，有两个端口号是3333和4444，搭建完成后，死活这两个连不上，改端口为
+>             	3330和4440后，才可以连了。 
+> 			注*此时redis.conf一定不要设置密码。否则redis-trib.rb创建集群会报错连不上节点。
+> 				创建完成集群之后，再用命令设置密码。
+> 		6、启动全部的6个节点
+> 			① 方法1：手动挨个启动
+> 			② 方法2：创建脚本文件，批量执行命令。
+> 				1、touch start-all.sh。内容参考:
+> 					cd redis01
+> 					./src/redis-server ../redis.conf
+> 					cd ..
+> 					cd redis02
+> 					...
+> 					...
+> 					cd redis06
+> 					./src/redis-server ../redis.conf
+> 				注* 如果start-all.sh是window新建的话，需要在linux中修改格式。
+> 					vi start-all.sh
+> 					: set ff=unix
+> 					保存退出
+> 				2、修改该脚本的权限：
+> 					chmod +x start-all.sh
+> 	2> 准备redis-trib.rb文件的运行环境：
+> 		1、yum install ruby   -- 安装ruby语言运行环境
+> 		2、gem install redis-3.0.0.gem -- 把ruby相关的包安装到服务器 参考备注
+> 		3、安装RVM，如果没有curl，先安装curl。用RVM升级ruby到2.2.2以上 -- 参考安装RVM章节
+> 		注* redis-trib.rb是一个ruby文件，所以需要ruby文件的运行环境。
+> 		注* redis-trib.rb在redis安装文件中。
+> 		注* CentOS7系统的话：安装完ruby之后，需要安装RVM，用RVM对ruby升级到v2.2.2以上，否则执行			redis-trib.rb命令创建集群的时候后报错。
+> 		注*  把ruby相关的包安装到服务器
+> 			https://rubygems.org/gems/redis/versions/4.1.0
+> 			links --> download -- 需要将redis-3.0.0.gem单独下载下来，再上传服务器，再安装
+> 	3> 操作防火墙：
+>     	1、开放6个节点的端口，开放6个节点对一个的总线程端口 -- 参考整合Redis中的CentOS7防火墙操作 
+> 		注*总线程端口是节点端口加10000，比如6个节点的端口是1111,2222,3333....6666，则对应总线程			端口为11111,12222,13333...16666
+> 	4> 执行redis-trib.rb命令创建集群
+> 		./redis-trib.rb create --replicas 1 39.105.32.104:1111 39.105.32.104:2222 				39.105.32.104:3330 39.105.32.104:4440 39.105.32.104:5555 39.105.32.104:6666
+> 		1、--replicas 1的含义：从机数/主机数
+> 		注：redis-trib.rb在redis的安装文件中。或者cp命令把该文件赋值一份到redis-cluster中
+> ```
+>
+> #### 安装RVM
+>
+> ```python
+> 步骤：
+> 	1> 安装 curl 
+> 		#  sudo yum install  curl
+> 	2> 安装 RVM
+> 		#  curl -L  get.rvm.io | bash -s stable
+> 	注* 上面领命会报错，因为防火墙阻挡了安装
+> 	3> 失败后会有提示：or if it failed:
+>         command curl -sSL https://xxxxx    -- 获取公钥
+> 	4> 执行上面提示命令，然后继续执行安装RVM命令：#  curl  -L  get.rvm.io |  bash -s  stable
+> 	5> 提示：Thank you for using RVM!
+> 		上面还有提示：To start using RVM you need to run 'source/etc/profile.d/rvm.d'
+> 	6> 执行命令：source/etc/profile.d/rvm.d
+> 	7> 下载RVM依赖
+> 	8> 查看centos  下rvm管理的软件和版本
+> 		#  rvm  list known
+> 	9> 安装ruby-2.2
+> 		rvm install ruby-2.2.0
+> 	10> 查询当前使用的版本
+> 		# rvm info
+> 来源：
+> 	安装RVM的正确姿势：https://cloud.tencent.com/developer/article/1151349
+> 原则：
+> 	按照失败之后的提醒，来操作，而不是按照网上的步骤来做
+> RVM各种命令：
+> 	https://blog.csdn.net/shaonian_wo/article/details/78007722
+> ```
+>
+> #### 报错记录
+>
+> ```python
+> 1、一直卡在Waiting for the cluster to join....的问题  
+> 	https://blog.csdn.net/xianzhixianzhixian/article/details/82392172 
+> 	解决：
+> 		1> 打开集群总线端口   linux
+> 		2> 打开集群总线端口   aliyun安全组
+> 		或者
+> 		1> 直接关掉防火墙
 > 
+> 2、报错slot xx已经被分配过了
+> 	错误：
+> 		ERR Slot 0 is already busy (Redis::CommandError)
+> 	原因：
+> 		已经执行过./redis-trib.rb create --replicas 1命令，再次执行的时候，后报该错误。
+> 	解决：
+> 		节点挨个连接，挨个执行flushall和redis reset
+> 
+> 3、配置参数含义  
+> 	描述：
+> 		集群的redis-1111.conf的配置含义
+> 	来源：
+> 		https://blog.csdn.net/bigtree_3721/article/details/78883857
+> 
+> 4、升级ruby问题
+> 	--参考安装RVM
+> 
+> 5、.sh文件权限问题，ff=unix问题
+> 	来源：https://blog.csdn.net/qq_28096687/article/details/79356173
+> 	总结：
+> 		在windows环境下任何工具编写sh脚本文件，在上传到linux环境后执行sh脚本前千万记得要
+> 		set ff=unix，去掉每行尾部多余的\r。
+> 
+> 6、3333端口和4444端口无效
+> 	错误：
+> 		端口有毒
+> 	原因：
+> 		猜测是这两个端口被系统的某些服务占用了
+>     解决：
+>     	待解决
+> 
+> 7、集群搭建成功，但是不能存入值，一直卡在Redirected to slot [8949] 
+> 	注意：redis-trib.rb执行创建集群命令，不能用127.0.0.1一定要用具体ip
+> 		集群搭建完成之后，服务端redis-cli可以连接，其他地方都不能连接
+> 	过程:
+> 		1> window本地: 连接redis-cli -c -h 39.105.32.104 -p 1111   
+> 			没有设置密码，不需要加-a
+> 		2> 执行set方法，set name guozi
+> 		3> 一直卡在： Redirected to slot [10138] located at 127.0.0.1:2222     
+> 			查询并没有存进去，因为也没有输出+OK
+> 	原因：
+> 		Redirected to slot [8949] located at 127.0.0.1:2222   
+> 		注意：
+> 			ip是127.0.0.1  
+> 			这个是执行./redis-trib.rb create replicas 1 127.0.0.1 1111  .....
+> 			这个命令的时候，定的。
+> 			执行set name guozi的时候，输出信息表明redis集群回去找127.0.0.1的2222端口，
+> 			而window客户端的127.0.0.1是window本地的ip，所以找不到。
+> 			redis集群所在机器的127.0.0.1正好是服务端所在的机器，所以可以找到，可以存进去。
+> 	解决：
+> 		按照 重新执行搭建集群命令 执行。将ip从127.0.0.1改为具体的iP
+> 
+> 
+> 8、重新执行搭建集群命令
+> 	1> 删除nodes.conf、删除dump.rdb
+> 	2> 节点挨个连接，挨个执行flushall和redis reset
+> 	3> 重新执行命令：./redis-trib.rb create --replicas 1
+> 
+> 9、redis版本、centos系统版本问题
+> 	1> 不能随便跟着网上的执行步骤走，因为可能版本不一样，网上前面的几乎都是redis3.x的版本
+> 	2> 安装ruby升级到工具，也是，网上的方法已经过时了。跟着安装出现的  错误后解决步骤走就可以自己解		决
+> 	3> 网上说的redis安装目录下有bin目录，但是redis4.x是没有的。需要自己解决，
+> 		cp redis4.0.9/ ../redis-cluster/redis01。把整个redis的安装目录移动到redis01下面
+> 
+> 10、集群密码：
+> 	1> 搭建的时候，千万不要设置密码。否则会报连接ip:port失败(第一个子节点就连不上)
+> 	2> 设置密码的时机：集群搭建完成
+> 		1、命令行的方式，优点是不用重新启动服务
+> 		2、简单粗暴，反正已经集群搭建完毕了。直接把每个节点的redis.conf改了，加上密码
+> 			(masterauth 和 requirepass )。再把节点按新的redis.conf启动起来。
+> 	3> 命令行方式：
+> 		1、redis.cli -c -h 39.105.32.104  -p 1111(第一个节点)
+> 		2、config set masterauth passwd123 
+> 		3、config set requirepass passwd123 
+> 		4、这时候再操作，已经要报错了，需要密码，所以，退出，重新加上密码连接一次
+> 		5、redis.cli -c -h 39.105.32.104  -p 1111 -a 123456，这时可以重新连接成功了
+> 		6、执行命令，把刚才的设置写入redis.conf配置文件：config rewrite 
+> 		7、同样的步骤，把剩下的5个redis实例，都设置密码，不论主还是从
+> 	4> 来源：https://www.cnblogs.com/linjiqin/p/7462822.html
+>         
+> 11、 创建集群报错
+> 	在运行ruby的时候，一直报错>>> Creating cluster [ERR] Sorry, can't connect to node
+> 	因为节点设置了密码，千万不能设置密码，而应该搭建集群完毕之后，再用命令设置密码
+> ```
+>
+> #### 一路搜刮
+>
+> ```python
+> 1> linux下gpg的加密解密说明
+> 	https://www.linuxidc.com/Linux/2015-02/113015.htm
+> 2> redis5.x工具文件是c写的，不再是ruby写的了
+> 3> centos7需要ruby版本在2.2.2之上
+> 4> RVM各种命令：
+> 	https://blog.csdn.net/shaonian_wo/article/details/78007722
+> 5> curl命令和yum命令的区别
+> ```
+
+#### 4、集群模式(客户端分片)
+
+> ```python
+> 
+> ```
+
+#### 5、集群模式(twenproxy)
+
+> ```python
+> https://www.cnblogs.com/crazylqy/p/7455633.html
 > ```
 
 #### 6、集群和主从+哨兵哪个好
@@ -277,13 +609,8 @@
 > ```python
 > https://q.cnblogs.com/q/109403/
 > https://www.cnblogs.com/demingblog/p/10295236.html
+> https://www.cnblogs.com/crazylqy/p/7455633.html -- 大牛
 > ```
-
-
-
-
-
-#### 
 
 #### 7、一路搜刮
 
@@ -471,13 +798,88 @@
 > rpm -qa | grep screen
 > ```
 
+#### 8、java访问redis集群
 
+> #### 报错：NOAUTH Authentication required
+>
+> ```python
+> 问题：
+> 	已经在application.yml中配置了spring.redis.password=yourpassword，
+> 	但是这个配置在JedisConnectionFactory中没有被加载进去
+> 解决：
+> 	手动加载
+> 	@Bean
+>     JedisConnectionFactory jedisConnectionFactory() {
+>         JedisConnectionFactory factory = new JedisConnectionFactory();
+>         factory.setPassword("12345678....");
+>         return factory;
+>     }
+> 来源：
+> 	https://blog.csdn.net/shangyadongze/article/details/80371998
+> ```
+>
+> #### 报错：timeout问题
+>
+> ```python
+> application.yml中的spring.
+> ```
+>
+> #### 报错：java代码问题
+>
+> ```python
+> 1> 下面两个模板都能操作redis
+> 	@Autowired  //操作字符串的template，StringRedisTemplate是RedisTemplate的一个子集
+>     private StringRedisTemplate stringRedisTemplate;
+> 
+>     @Autowired  // RedisTemplate，可以进行所有的操作
+>     private RedisTemplate<Object,Object> redisTemplate;
+> 2> 但是结果：
+> 	redisTemplate存入的是对象，redis中key为:"\xac\xed\x00\x05t\x00\x03age"
+> 	stringRedisTemplate存入的是字符串，redis中key为："age"
+> ```
+>
+> #### 注意：配置application.yml
+>
+> ```python
+> spring:
+>     redis:
+>         password: 123456  #注意：password配置在redis下面
+>         # 连接超时时间（毫秒）
+>         timeout: 5000  #注意：超时时间不能为0
+>         #采用哪个数据库
+>         database: 0
+> 
+>         sentinel:
+>           master: s1  #注意：主机名称，是sentinel.conf中配置的名称
+>           #三个哨兵的端口
+>           nodes: 192.168.1.125:26379,192.168.1.125:26380,192.168.1.126:26379 
+> ```
+>
+> #### 报错：代码执行了，但是在redis中查找不到
+>
+> ```python
+> 问题：
+> 	1> java代码执行了，但是telent或者redis-cli连接192.168.1.125 1110之后，查找。没有存入的key
+> 	2> application.yml中将sentinel下的master从s1改为s2之后，连接192.168.1.126 2220，可以找到
+> 	3> 重新改回s1，重新执行代码，连接192.168.1.125 1111，可以找到
+> 结论：
+> 	1> 想起来了：搭建起来主从+哨兵模式后，为了测试，将192.168.1.125的主机，即1110端口的实例杀掉		了，测试哨兵是否按机制起作用。
+> 	2> 疑问：1111是成功变为了主机，但是好像1110并没有变为从机。如果是从机了，就应该有主从复制成功
+> 	3> 有时间再测试一下，哨兵是否起作用
+> ```
 
+#### 9、大牛知识扩展
 
-
-
-
-
-
-
+> ```python
+> 第一步：
+> 	所有redis部署方式
+>     1> 可以利用主从模式实现读写分离，主负责写，从负责只读，同时一主挂多个从。在Sentinel监控下，还可		以保障节点故障的自动监测。
+>     2> 上面分别介绍了多Redis服务器集群的两种方式，它们是基于客户端sharding的Redis Sharding
+>     3> 基于服务端harding的Redis Cluster。
+>     4> twemproxy处于客户端和服务器的中间，将客户端发来的请求，进行一定的处理后(如sharding)，再转		发给后端真正的Redis服务器。也就是说，客户端不直接访问Redis服务器，而是通过twemproxy代理中		 间件间接访问。
+>     来源：https://www.cnblogs.com/crazylqy/p/7455633.html
+>     
+> 第二步：
+> 	集群开机自启动
+> ```
 

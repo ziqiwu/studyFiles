@@ -2,7 +2,16 @@
 
 ------
 
-#### 0、为什么使用SpringBoot
+#### ***官网文档***
+
+> ```python
+> 进入springboot官网文档页面：
+> 	spring.io --> 页面上方PROJECTS --> SPIRNG BOOT --> 右侧的Learn --> 
+> 	选择一个版本，比如2.2.0 SNAPSHOT --> Reference Doc. --> Spring Boot Features -->
+> 	比如查看自定义banner章节 --> 点击左侧的Customizing the Banner
+> ```
+
+#### 为什么使用SpringBoot
 
 > ```python
 > SpringBoot使配置变简单
@@ -15,7 +24,7 @@
 > 	有十几个路径可以直接可视化监控信息
 > ```
 
-#### 1、快速构建项目
+#### 0、快速构建项目
 
 > #### 手动创建HelloSpringBoot
 
@@ -53,11 +62,8 @@
 > 第五步：启动启动类，访问http://localhost:8080/greeting访问
 > ```
 >
-> 
-
 > #### IDEA创建HelloSpringBoot
 >
-
 > ```python
 > 第一步：file --> new --> project --> Spring Initializer(鼠标放上去显示Create Spring boot 		Applications using Spring boot Starters) --> JDK选择1.8，没有就New一个 --> Next
 > 第二步：填写Group、Artifact --> 类型是Maven Project --> 打包方式jar --> java版本1.8 --> Next
@@ -73,9 +79,8 @@
 >     }
 > 第五步：启动启动类，访问http://localhost:8080/greeting访问
 > ```
->
 
-#### 2、查看默认依赖jar包
+#### 1、查看默认依赖jar包
 
 > ```python
 > 1、pom.xml文件中如果依赖包没有<version>信息，则版本就和<parent>的版本一直。如果想引用最新的，就自	己增加<version>信息，然后重新刷新导入jar包。
@@ -88,7 +93,7 @@
 > 2、pom.xml文件中ctrl + 左键点击<parent>标签中内容，进入父.pom文件，发现还有<parent>标签，接着点击	标签中内容，又进入爷爷.pom文件，发现了各种的依赖包，以及版本
 > ```
 
-#### 3、特有注解
+#### 2、特有注解
 
 > ```python
 > 1、@RestController and @RequestMapping是springMVC的注解，不是springboot特有的	
@@ -100,7 +105,69 @@
 > 【注3】具体原因，可ctrl + 点击@RestController注解和@SpringBootApplication注解进行查看
 > ```
 
-#### 4、常用请求方式
+#### 3、请求方式
+
+> #### 前言
+>
+> ```python
+> 下面所有方法中的param变量，都是：
+> 	private Map<String,Object> param = new HashMap<String,Object>();
+> ```
+>
+> #### 测试GetMapping
+>
+> ```python
+>     @GetMapping(value="/v1/page_user1")
+>     public Object pageUser(int from,int size){
+>         param.put("from",from);
+>         param.put("size",size);
+>         return param;
+>     }
+> 
+> 	1> 测试：
+>     	http://localhost:8080/v1/page_user1?from=0&size=100
+> ```
+>
+> #### 测试PostMapping
+>
+> ```python
+>     @PostMapping("/v1/login")
+>     public Object login(String id,String pwd){
+>         param.put("id",id);
+>         param.put("pwd",pwd);
+>         return param;
+>     }
+> 	
+>     1> 笔记1：
+>     	1、postman模拟post请求。只有两个参数，在Postman中，除了上面的方法中点raw，
+>         	这儿点击Body中的x-wwww-from-urlencoded，是key-value形式
+>     	2、选择之后，在Http的header中有一个key-value是：
+>         	Content-type:application/x-www-form-urlencoded
+> ```
+>
+> #### 测试PutMapping
+>
+> ```python
+>     @PutMapping("/v1/put")
+>     public Object put(String id){
+>         param.put("id",id);
+>         return param;
+>     }
+> 
+> ```
+>
+> #### 测试DeleteMapping
+>
+> ```python
+> @DeleteMapping("/v1/del")
+> public Object del(String id){
+>     param.clear();
+>     param.put("id",id);
+>     return param;
+> }
+> ```
+
+#### 4、获取参数
 
 > #### 简介
 >
@@ -108,95 +175,83 @@
 > GET/POST/PUT/DELETE
 > ```
 >
-> #### 实战代码
+> #### 前言
 >
 > ```python
-> @RestController
-> public class HelloWorldController {
+> 下面所有方法中的param变量，都是：
 > 	private Map<String,Object> param = new HashMap<String,Object>();
-> 
->     /**
->      * 功能描述：测试restful协议 -- 从路径中获取字段
->      * @param cityId
->      * @param userId
->      * @return
->      */
->     //笔记1：@RequestMapping中的path参数值，按规则写成小写字母加下划线，不要写成驼峰
->     //笔记2：方法findUser中的参数，可以写成@PathVariable，不加括号中的参数，但是这时候，就需要			String user_id和路由中的参数一模一样。如果想下面的不一样，就需要在@PathVariable中加参数		 和路由中参数映射，获取值
->     //测试：http://localhost:8080/10010/12
+> ```
+>
+> #### 从restful路径中获取参数--@PathVariable
+>
+> ```python
 >     @RequestMapping(path="/{city_id}/{user_id}",method= RequestMethod.GET)
 >     public Object findUser(@PathVariable("city_id") String cityId,@PathVariable("user_id") 		String userId){
->         param.clear();
 >         param.put("cityId",cityId);
 >         param.put("userId",userId);
 >         return param;
 >     }
 > 
-> 
->     /**
->      * 功能描述：测试GetMapping
->      * @param from
->      * @param size
->      * @return
->      */
->     //测试：http://localhost:8080/v1/page_user1?from=0&size=100
->     @GetMapping(value="/v1/page_user1")
->     public Object pageUser(int from,int size){
->         param.clear();
->         param.put("from",from);
->         param.put("size",size);
->         return param;
->     }
-> 
-> 
->     /**
->      * 功能描述：1、设置默认值；2、设置是否为必须的参数
->      * @param from
->      * @param size
->      * @return
->      */
+>     1> 笔记1：
+>     	@RequestMapping中的path参数值，按规则写成小写字母加下划线，不要写成驼峰
+>     2>笔记2：
+>     	方法findUser中的参数，可以写成@PathVariable，不加括号中的参数，但是这时候，就需要			    String user_id和路由中的参数一模一样。如果想下面的不一样，就需要在@PathVariable中加参数和         路由中参数映射，获取值。
+>     3> 测试：
+>     	http://localhost:8080/10010/12
+> ```
+>
+> #### url参数：--@RequestParam
+>
+> ####       1 设置默认值；
+>
+> ####       2 设置是否为必须的参数
+>
+> ```python
 >     @GetMapping(value="/v1/page_user2")
->     //笔记1：路径中不是from而是@RequestParam中的name属性值，即page
->     //测试1：http://localhost:8080/v1/page_user2?page=100&size=50
->     //测试2：http://localhost:8080/v1/page_user2?size=50
->     //测试3：http://localhost:8080/v1/page_user2   -- 提示"Required int parameter 'size' is 			not present"
->     public Object pageUser2(@RequestParam(defaultValue = "0",name = "page") int from 			,@RequestParam(required = true) int size){
->         param.clear();
+>     public Object pageUser2(@RequestParam(defaultValue = "0",name = "page") int from,                                   @RequestParam(required = true) int size){
 >         param.put("from",from);
 >         param.put("size",size);
 >         return param;
 >     }
 > 
-> 
->     /**
->      * 功能描述：Bean对象传参
->      *      当路由中参数过多的时候，比如表单post提交的注册功能。不能在方法参数中写全部的参数一个一			个获取，最好定义一个Bean一次接受。
->      * @param user
->      * @return
->      */
->     //笔记1：注意需要指定http头为content-type为application/json。即在Postman填完url后点击body,		在下一行最后有一个下拉选，默认是Text，选择JSON(application/json)
->     //笔记2：使用body传输数据。即在Postman填完url后点击body,点击raw,填一个json格式参数，比如{
->     //	"username":"guozi",
->     //	"age":"26"
->     //}
->     //测试：http://localhost:8080/v1/save_user
+> 	1> 笔记1：
+>     	路径中不是from而是@RequestParam中的name属性值，即page
+>     2> 测试1：
+>     	http://localhost:8080/v1/page_user2?page=100&size=50
+>     2> 测试2：
+>     	http://localhost:8080/v1/page_user2?size=50
+>     3> 测试3：
+>     	http://localhost:8080/v1/page_user2 
+>         注意：提示"Required int parameter 'size' is not present"
+> ```
+>
+> #### Bean对象传参--@RequestBody
+>
+> ```python
 >     @PostMapping("/v1/save_user")
 >     public Object saveUser(@RequestBody User user){
 >         param.put("user",user);
 >         return param;
 >     }
 > 
-> 
->     /**
->      * 功能描述：测试获取http请求的Header中的信息
->      *      如下面的请求路由，只有一个id参数，access_token是在header中设置的
->      * @param accessToken
->      * @param id
->      * @return
->      */
->     //笔记1：比如设计token来进行会话管理，则需要获取Header中的token信息，在后台进行获取后判断
->     //笔记2：在Postman中填写路径之后，在第二行有一个Headers，点击，是key-value格式，key				写"access_token"，value随便写一个标识
->     //测试：http://localhost:8080/v1/get_header?id=12
+> 	1> 笔记1：
+>     	注意需要指定http头为content-type为application/json。即在Postman填完url后点击body,		    在下一行最后有一个下拉选，默认是Text，选择JSON(application/json)
+>     2> 笔记2：
+>     	使用body传输数据。即:
+>             在Postman填完url后点击body,点击raw,填一个json格式参数，比如
+>             {
+>             	"username":"guozi",
+>             	"age":"26"
+>             }
+>     3> 测试：
+>     	http://localhost:8080/v1/save_user
+> 	4> 应用场景：
+>     	当路由中参数过多的时候，比如表单post提交的注册功能。不能在方法参数中写全部的参数一个一个获		    取，最好定义一个Bean一次接受。
+> ```
+>
+> #### 获取http请求的Header中的信息--@RequestHeader
+>
+> ```python
 >     @GetMapping("/v1/get_header")
 >     public Object getHeader(@RequestHeader("access_token") String accessToken,String id){
 >         param.put("access_token",accessToken);
@@ -204,64 +259,28 @@
 >         return param;
 >     }
 > 
->     /**
->      * 功能测试：使用原始的HttpServletRequest获取参数值
->      * @param req
->      * @return
->      */
->     //测试：http://localhost:8080/v1/test_request?id=12
+> 	1> 笔记1：
+>     	比如设计token来进行会话管理，则需要获取Header中的token信息，在后台进行获取后判断
+>     2> 笔记2：
+>     	在Postman中填写路径之后，在第二行有一个Headers，点击，是key-value格式，key			           写"access_token"，value随便写一个标识
+>     3> 测试：
+>     	http://localhost:8080/v1/get_header?id=12
+> 	4> 注意：
+>     	如上面的请求路由，只有一个id参数，access_token是在header中设置的
+> ```
+>
+> #### 使用原始的HttpServletRequest获取参数值
+>
+> ```python
 >     @GetMapping("/v1/test_request")
 >     public Object testRequest(HttpServletRequest req){
->         param.clear();
 >         String id=req.getParameter("id");
 >         param.put("id",id);
 >         return param;
 >     }
->     
->     
->     
->     /**
->      * 功能描述：测试PostMapping
->      * @param id
->      * @param pwd
->      * @return
->      */
->     //笔记1：只有两个参数，在Postman中，除了上面的方法中点raw，这儿点击Body中的x-wwww-from-			urlencoded，是key-value形式
->     //选择之后，在Http的header中有一个key-value是：Content-type:application/x-www-form-				urlencoded
->     @PostMapping("/v1/login")
->     public Object login(String id,String pwd){
->         param.clear();
->         param.put("id",id);
->         param.put("pwd",pwd);
->         return param;
->     }
 > 
->     
->     /**
->      * 功能描述：测试@PutMapping
->      * @param id
->      * @return
->      */
->     @PutMapping("/v1/put")
->     public Object put(String id){
->         param.clear();
->         param.put("id",id);
->         return param;
->     }
-> 
->     
->     /**
->      * 功能描述：测试@DeleteMapping
->      * @param id
->      * @return
->      */
->     @DeleteMapping("/v1/del")
->     public Object del(String id){
->         param.clear();
->         param.put("id",id);
->         return param;
->     }
-> }
+> 	1> 测试：
+>     	http://localhost:8080/v1/test_request?id=12
 > ```
 
 #### 5、常用json框架
@@ -273,7 +292,7 @@
 > 简介：介绍常用json框架和注解的使用，自定义返回json结构和格式
 > 
 > 1、常用框架 阿里 fastjson,谷歌gson等
->     JavaBean序列化为Json，性能：Jackson > FastJson > Gson > Json-lib 同个结构
+>     'JavaBean''序列化'为'Json'，性能：Jackson > FastJson > Gson > Json-lib 同个结构
 >     Jackson、FastJson、Gson类库各有优点，各有自己的专长
 >     空间换时间，时间换空间
 > 
@@ -358,16 +377,23 @@
 > </dependency>
 > 注意：如果不引人这个依赖包，html文件应该放在默认加载文件夹里面，
 > 比如resources、static、public这个几个文件夹，才可以访问。
-> 如果是放在了templte目录中，就需要添加下面笔记1中的内容，才可以访问得到。
+> 如果是放在了template目录中，就需要添加下面笔记1中的内容，才可以访问得到。
 > 
 > 笔记1：创建一个testHtml.html放在template目录中，直接访问http://localhost:8080/testHtml.html，
-> 	会发现报错。因为springboot框架不会默认到template目录中找，需要引入一个spring-boot-starter-       thymeleaf.jar的jar包，然后写一个controller映射。
+> 	会发现报错。因为springboot框架不会默认到template目录中找，需要引入一个spring-boot-starter-       thymeleaf的jar包，然后写一个controller映射。
 > 	@RequestMapping(value="/api/v1/gopage")
 >     public Object index(){
 >         return "testHtml";
 >     }
 >     访问http://localhost:8080/api/v1/gopage就可以访问了。
-> 跟敲报错：输入http://localhost:8080/api/v1/gopage一直返回页面只有testHtml一个单词。原因是我把这	个路由方法放在了之前就有的一个返回json数据的类里面，类上面有注解@RestController，类里的方法返回	的都是json格式。return "testHtml"也变成json格式返回了。解决是新建立了一个类。当然也可以把类注	    解改为@Controller，原有的方面多加一个@ResponseBody注解
+> 跟敲报错：
+> 	输入http://localhost:8080/api/v1/gopage一直返回页面只有testHtml一个单词。
+> 原因是：	
+> 	参见"获取参数从Restful获取参数"：
+> 	@RequestMapping(path="/{city_id}/{user_id}",method= RequestMethod.GET)
+> 	我把这个路由方法放在了之前就有的一个返回json数据的类里面，类上面有注解@RestController，类里的	方法返回的都是json格式。return "testHtml"也变成json格式返回了。
+> 解决是：
+> 	新建立了一个类。当然也可以把类注解改为@Controller，原有的方法多加一个@ResponseBody注解
 > ```
 >
 > #### 同个文件的加载顺序 (静态资源文件)
@@ -377,15 +403,19 @@
 > META/resources > resources > static > public  里面找是否存在相应的资源，如果有则直接返回。
 > 
 > 笔记1：在项目的目录结构中(参考上面的目录讲解)，每个目录中都存放一个testJs.js文件，内容写得有区分		点，然后在浏览器中直接访问http://localhost:8080/testJs.js，会发现输出的是resources中     		testJs.js的内容。删掉这个文件，再访问，会发现输出的是static目录中的内容。删掉这个文件，再访		问，会防线输出的是public目录中的内容。
-> 笔记2：访问地址直接写http://localhost:8080/testJs.js，不需要写									http://localhost:8080/resources/testJs.js等，因为springboot框架会默认顺序地从上面的目录中查	   找这些静态资源文件。
+> 笔记2：访问地址直接写http://localhost:8080/testJs.js，
+> 	不需要写http://localhost:8080/resources/testJs.js等，
+> 	因为springboot框架会默认顺序地从上面的目录中查找这些静态资源文件。
 > 	但是如果是比如：static/js/testJs.js的话，就需要访问http://localhost:8080/js/testJs.js。
 > 	不需要写static，因为默认会顺序访问，但是js文件夹需要写。
 > ```
 > #### js/css/image等静态资源文件不在默认加载的目录中
 >
 > ```python
-> 需要修改默认配置
-> 默认配置	
+> 背景：
+> 	项目中的js/css/image都是跟着模块走的。不在spirngboot默认加载目录内。
+> 	需要修改默认配置
+> 默认配置
 > 1）官网地址：
 > 	https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-			developing-web-applications.html#boot-features-spring-mvc-static-content
 > 
@@ -394,7 +424,9 @@
 >                     
 > 笔记1：比如因为业务需求，静态资源文件，并没有存放在默认加载的目录中，而是放在一个test目录中，路径为
 > 	java/main/resources/test/testJs.js。
-> 	这时候访问http://localhost:8080/test/testJs.js也不会访问到，因为/test/目录没有加在spring加     载的范围内。解决如下：
+> 	这时候访问http://localhost:8080/test/testJs.js也不会访问到，
+> 	因为/test/目录没有加在springboot加载的范围内。
+> 	解决如下：
 > 	在application.properties文件中(创建springboot项目时候已经生成)，然后粘贴进默认的配置
 > 	spring.resources.static-locations = classpath:/META-									INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/ 
 > 	然后再默认配置后面追加上/test/目录，即
@@ -408,7 +440,7 @@
 > ```python
 > 比如阿里，腾讯等，
 > 1、都会把静态资源文件存储在CDN，就比如访问国外网站，需要从那么远的服务器上请求到资源，然后下载到本		地，很耗时间。所以会把静态资源文件，存放在CDN上。
-> 2、前后端分离，在tomcat等上面请求静态资源文件，并没有nginx等这样的服务器性能高。
+> 2、前后端分离，在tomcat等上面请求'静态资源文件'，并没有nginx等这样的服务器性能高。
 > 3、会专门搭建图片的服务器。
 > ```
 
@@ -442,29 +474,34 @@
 > 笔记1：
 > 	静态页面直接访问：localhost:8080/index.html
 > 注意点：
-> 	如果想要直接访问html页面，则需要把html放在springboot默认加载的文件夹下面，resources、           static、public
+> 	如果想要直接访问html页面，则需要把html放在springboot默认加载的文件夹下面：
+> 	resources、static、public
 > ```
 >
 > #### 后端
 >
 > ```python
+> 注* 只有两点注意
+> 	1> MultipartFile对象接收前端type=file的文件
+> 	2> uploadFile.transferTo(filePathFile) --MultipartFile 对象的transferTo方法，用于文件保存
 > @RestController
 > public class UploadController {
 >     @PostMapping("/upload")
->     public Object uploadHandler(@RequestParam("upload_name")MultipartFile 						uploadFile,@RequestParam("user_name") String username) {
+>     public Object uploadHandler(@RequestParam("upload_name") MultipartFile 						uploadFile,@RequestParam("user_name") String username) {
 >         String originalName = uploadFile.getOriginalFilename();
 >         String suffixName = originalName.substring(originalName.indexOf("."));
 >         String nowName = UUID.randomUUID() + suffixName;
 > 
 >         System.out.println("---文件是否为空："+ uploadFile.isEmpty());
 >         System.out.println("---文件大小："+uploadFile.getSize());
->         System.out.println("--文件原始名称："+originalName);
->         System.out.println("--文件后缀名：" + suffixName);
->         System.out.println("--文件上传后名称："+nowName);
->         System.out.println("--参数user_name:"+username);
+>         System.out.println("---文件原始名称："+originalName);
+>         System.out.println("---文件后缀名：" + suffixName);
+>         System.out.println("---文件上传后名称："+nowName);
+>         System.out.println("---参数user_name:"+username);
 >         
 >         try {
->             //MultipartFile 对象的transferTo方法，用于文件保存（效率和操作比原先用FileOutStream             //方便和高效）
+>             //MultipartFile 对象的transferTo方法，用于文件保存
+>             //（效率和操作比原先用FileOutStream方便和高效）
 >             uploadFile.transferTo(filePathFile);
 >             return filePath;
 >         } catch (IOException e) {
@@ -477,8 +514,9 @@
 > //笔记2：System.getProperty("user.dir")后面跟着的路径，需要到工作空间的项目去一层一层看
 > 	String filePath = System.getProperty("user.dir") +                                          "/src/main/resources/static/images/" + nowName;
 > 	File filePathFile = new File(filePath);
-> //笔记3:当文件上传成功后，直接访问http://localhost:8080/images/c7451ef5-54bf-424e-                  b603-a6d741647224.log，但是出现{"cityId":"images","userId":"c7451ef5-54bf-424e-              b603-a6d741647224.log"}。是因为自己的一个controller中测试restFull接口获取参数，
-> 	需要注释掉@RequestMapping(path="/{city_id}/{user_id}",method=                                RequestMethod.GET)
+> //笔记3:当文件上传成功后，直接访问http://localhost:8080/images/c7451ef5-54bf-424e-                  b603-a6d741647224.log，但是出现{"cityId":"images","userId":"c7451ef5-54bf-424e-              b603-a6d741647224.log"}。
+> 	是因为自己的一个controller中测试restFull接口获取参数，
+> 	需要注释掉@RequestMapping(path="/{city_id}/{user_id}",method=RequestMethod.GET)
 > //笔记4：正常的应该返回的json应该是专门定义一个对象，字段有code，sucessdata，failmsg
 > 	public class ReturnJson {
 >         //返回状态，-1失败，0成功
@@ -518,8 +556,10 @@
 > }
 > 
 > 笔记1：文件上传大小配置的方法必须在有@Configuration注解的类中，才能生效。
-> 笔记2：在Springboot启动类中写该配置方法也可以，因为@SpringBootApplication
-> 	注解就相当于@SpringBootConfiguration、@EnableAutoConfiguration、@ComponentScan三个注解的作 	 用。ctrl + 点击@SpringBootConfiguration可以发现里面就有@Configuration注解，可以把该配置方法     写在启动类中也是可以生效的。
+> 笔记2：在Springboot启动类中写该配置方法也可以，	
+> 	因为：
+> 		@SpringBootApplication = @Configuration+@EnableAutoConfiguration+@ComponentScan
+> 	ctrl + 点击@SpringBootConfiguration可以发现里面就有@Configuration注解。
 > ```
 
 #### 8、jar包启动
@@ -528,6 +568,9 @@
 >
 > ```python
 > 讲解SpingBoot2.x使用 java -jar运行方式的图片上传和访问处理
+> 注* nohup java -jar yourapp.jar --server.port=8888 &
+> 	可以启动命令指定port，所以机器上传一份项目，如果是nginx负载均衡，不同端口启动即可。
+> 	来源：https://www.cnblogs.com/kedarui/p/6518723.html
 > ```
 >
 > #### 打成jar包的方法
@@ -535,8 +578,10 @@
 > ```python
 > IDEA的右侧MAVEN --> Lifecycle --> install --> 第一次会downloading一堆jar包，很慢，第二次就     很快了 --> 在项目的target文件夹中可以找到已经打包好的jar包
 > 	
-> 注意：maven install会把clean、package、download都执行一遍。打包好的jar包会放在maven项目的target		文件夹下。
+> 注意：maven install会把clean、package、download都执行一遍。打包好的jar包会放在maven项目的target	
+> 	文件夹下。
 > 注意：也可以在cmd命令窗口中使用mvn install命令进行打包
+> 	mvn clean package -Dmaven.test.skip=true
 > ```
 >
 > #### 运行jar包 (没有加入maven依赖)
@@ -590,10 +635,14 @@
 > 	Created-By: Apache Maven 3.3.9
 > 	Build-Jdk: 1.8.0_172
 > 	Implementation-URL: https://projects.spring.io/spring-boot/#/spring-boot-starter-			parent/springboot-demo
-> 	其中最重要的是Main-Class: org.springframework.boot.loader.JarLauncher，这个运行jar包的类在
-> 	META-INF的同级目录下。
->     Start-Class: com.guozi.springboot.springbootdemo.SpringbootDemoApplication指定了这个Jar     包的运行入口。
->         
+> 	
+> 	其中最重要的是
+> 		1> Main-Class: org.springframework.boot.loader.JarLauncher，
+> 			这个运行jar包的类在META-INF的同级目录下。
+> 			jar包启动器
+> 		2> Start-Class: com.guozi.springboot.springbootdemo.SpringbootDemoApplication
+> 			指定了生成的项目Jar包的运行入口。
+> 		注* 这些都在/META-INF/MANIFEST.MF
 > 2、没有加入maven依赖的情况
 > 	解压jar包，打开MANIFEST.MF，配置信息如下：
 > 	Manifest-Version: 1.0
@@ -628,7 +677,7 @@
 > 	访问http://localhost:8080/dd874828-55e9-4274-aaf7-0d5776eab40f.jpg是whitelabel error 		page页面。即这个不是springboot加载过的静态资源文件。
 > 笔记1：
 > 	如果只是把文件上传到某个项目之外的文件夹内，是不需要修改application.properties配置文件的。但是
-> 	如果想在项目中访问，就需要把这个文件夹变为springboot的加载过的静态资源文件夹，即需要在配置文件	中配置该文件夹纳入springboot加载的范围。
+> 	如果想在项目中直接访问，就需要把这个文件夹变为springboot的加载过的静态资源文件夹，即需要在配置	文件中配置该文件夹纳入springboot加载的范围。
 > 报错1：
 > 	我把代码中文件上传路径改为：String filePath = "E:/springboot_jar_images/"，然后运行一直报错
 > 	java.io.IOException: java.io.FileNotFoundException: E:\springboot_jar_images (拒绝访		问。)。我以为是配置文件中，格式的错误获取是路径的斜杠的错误，改了半天，没有效果。
@@ -645,7 +694,17 @@
 > ```python
 > 介绍什么是热部署，使用springboot结合dev-tool工具，快速加载启动应用。
 > 
-> spring-boot-devtools是一个为开发者服务的一个模块，其中最重要的功能就是热部署。原理是在发现代码有更改之后，重新启动应用，但是速度比手动停止后再启动更快。其深层原理是使用了两个ClassLoader，一个Classloader加载那些不会改变的类(第三方Jar包),另一个ClassLoader加载会更改的类，称为restart ClassLoader,这样在有代码更改的时候，原来的restart ClassLoader被丢弃，重新创建一个restart ClassLoader，由于需要加载的类相比较少，所以实现了较快的重启时间。即devtools会监听classpath下的文件变动，并且会立即重启应用（发生在保存时机）
+> 简介：
+> 	spring-boot-devtools是一个为开发者服务的一个模块，其中最重要的功能就是热部署。
+> 原理：
+> 	在发现代码有更改之后，重新启动应用，但是速度比手动停止后再启动更快。
+> 	其深层原理是使用了两个ClassLoader。
+> 	一个Classloader加载那些不会改变的类(第三方Jar包)，
+> 	另一个ClassLoader加载会更改的类，称为restart ClassLoader。
+> 	
+> 	这样在有代码更改的时候，原来的restart ClassLoader被丢弃，重新创建一个restart ClassLoader，
+> 	由于需要加载的类相比较少，所以实现了较快的重启时间。
+> 	即devtools会监听classpath下的文件变动，并且会立即重启应用（发生在保存时机）
 > ```
 >
 > #### SpringBoot项目在IDEA中实现热部署
@@ -680,7 +739,8 @@
 > #### 备注
 >
 > ```python
-> 可以捎带取消IDEA的自动保存功能，标志修改文件为星号。具体方式在Intellij IDEA的"自带功能设置"里面。
+> 可以捎带取消IDEA的自动保存功能，标志修改文件为星号。
+> 具体方式在studyFiles --> IDE --> IDEA --> Intellij IDEA的"自带功能设置"里面。
 > ```
 >
 > #### 来源
@@ -691,7 +751,7 @@
 > #### 指定不被热部署的目录
 >
 > ```python
-> 1、/resources, /static, /public, /templates，application.propertie等静态资源文件修改之后，也会	  进行热部署，也会单独对这些文件进行重新加载。如果不想这些文件修改的时候热部署，则可以指定其不备热     部署。
+> 1、/resources, /static, /public, /templates，application.propertie等静态资源文件修改之后，也会	  进行热部署，也会单独对这些文件进行重新加载。如果不想这些文件修改的时候热部署，则可以指定其不被热     部署。
 > 2、指定文件不进行热部署：
 > 	在application.properties文件中加spring.devtools.restart.exclude=static/**,public/**
 > 	注意：等号右边是不被热部署的文件名称
@@ -710,7 +770,7 @@
 > ```
 >
 
-#### 10、配置文件
+#### 10、application.yml
 
 > #### 常见的配置文件 xml、yml、properties的区别和使用
 >
@@ -735,12 +795,15 @@
 > 	  				tomcat.uri-encoding: UTF-8 
 > ```
 >
-> #### application.properties中所有的可以覆盖的默认配置
+> #### SpringBoot默认配置
 >
 > ```python
-> 1、Springboot2.1.0.BUILD-SNAPSHOT所有默认配置：
-> 	https://docs.spring.io/spring-boot/docs/2.1.0.BUILD-SNAPSHOT/reference/htmlsingle
-> 	/#common-application-properties
+> application.properties中所有的可以覆盖的默认配置
+> 
+> 1、Springboot2.1.0.BUILD-SNAPSHOT所有默认配置：	
+> 	spring.io --> projects --> spring-boot --> Learn --> Reference Doc.（比如2.2.0 M4）-->
+> 	页面检索"common-application-properties" --> 页面响应太慢，或者 -->
+> 	在Url后拼接#common-application-properties
 > 2、如果需要修改，直接复制对应的配置文件，加到application.properties里面
 > 3、默认示例文件仅作为指导。 不要将整个内容复制并粘贴到您的应用程序中，只挑选您需要的属性。
 > 笔记1：
@@ -749,8 +812,11 @@
 >
 > #### 把配置文件中的值 --> 映射到属性变量/实体类中
 >
+> #### 方法一
+>
 > ```python
-> 方式一：配置文件中的值 --> 映射到属性变量中
+> 配置方法：
+> 	配置文件中的值 --> 映射到属性变量中
 >     1、Controller上面配置
 >     	@PropertySource({"classpath:resource.properties"})
 >     2、增加属性
@@ -777,8 +843,11 @@
 > 		如果写@PropertySource({"classpath:resource.properties"})都找不到文件
 > ```
 >
+> #### 方法二
+>
 > ```python
-> 方式二：配置文件中的值 --> 映射到实体类中
+> 配置方法：
+> 	配置文件中的值 --> 映射到实体类中
 > 	1、添加 @Component 注解；
 > 	2、使用 @PropertySource 注解指定配置文件位置；
 > 	3、使用 @ConfigurationProperties 注解，设置相关属性；
@@ -927,13 +996,13 @@
 > 	笔记4：debug的话，可以打断点在MvcResult上，右键debug方法名称。可以鼠标移动到MvcResult对象上，		可以看到它有很多属性。找到mockResponse属性，点开mockResponse，会发现mockResponse也有很多		 属性，其中之一就是content，就是我们返回的对象json。
 > ```
 
-#### 12、个性化启动banner设置和debug日志
+#### 12、个性化启动banner
 
 > #### 个性化设置启动banner
 >
 > ```python
 > 官网地址：
-> 	https://docs.spring.io/spring-boot/docs/2.1.0.BUILD-									SNAPSHOT/reference/htmlsingle/#boot-features-banners
+> 	参照 "官网文档" 章节
 > 设置方法：
 > 	第一步：在类路径下增加一个banner.txt，里面是启动要输出的信息(即随便画点东西)
 > 	第二步：在applicatoin.properties增加banner文件的路径地址 
@@ -1019,8 +1088,9 @@
 > 	笔记3：源网址为https://blog.csdn.net/weixin_42079187/article/details/81277263
 > ```
 >
-> #### 设置debug日志
->
+
+#### 12、日志级别+日志输出文件
+
 > ```python
 > 1、jar包启动的时候：
 >     启动获取更多信息 java -jar xxx.jar --debug
@@ -1033,7 +1103,7 @@
 >           web: DEBUG
 > ```
 
-#### 13、全局异常
+#### 13、Exception
 
 > #### SpringBoot异常配置原理
 >
@@ -1146,10 +1216,12 @@
 > 		java -jar emample.jar --server.port=8081
 > 		该命令通过在启动行指定了项目启动后绑定的端口号，因为该命令行参数，将会覆盖						application.properties中的端口配置
 > 	备注3：
-> 		在maven项目的根目录下，执行mvn clean install，会在maven安装目录的maven-repository中找到		 该jar包，其中是有jarLoader和manifest中也是指明了启动类的。
+> 		在maven项目的根目录下，执行mvn clean package -Dmaven.test.skip=true
+> 		会在maven安装目录的maven-repository中找到该jar包，其中是有jarLoader和manifest中也是指明		了启动类的。
 > 		
 > 3、如果有安装maven，用 mvn spring-boot:run
-> 	备注1：mvn spring-boot:run -Drun.arguments="--server.port=8888"
+> 	备注1：
+> 		mvn spring-boot:run -Drun.arguments="--server.port=8888"
 > 	备注2：
 > 		我们需要进入项目的根目录，执行mvn sprint-boot:run。
 > 		idea中的话，直接点击项目名称，在terminal中运行该命令。
@@ -1158,12 +1230,12 @@
 > 		来源https://blog.csdn.net/u011425751/article/details/79507386
 > 4、war包方式启动
 > 	修改方式：
->         1) 修改pom.xml文件，打包方式改为war<packaging>war</packaging>
->         2) 修改pom.xml文件，构建项目名称<finalName>xdclass_springboot</finalName>
+>         1> 修改pom.xml文件，打包方式改为war<packaging>war</packaging>
+>         2> 修改pom.xml文件，构建项目名称<finalName>xdclass_springboot</finalName>
 >             注意：在<build>标签里面第一行添加<fialName>标签
->         3) 修改启动类
+>         3> 修改启动类
 > 	实战如下：
-> 		1) 修改pom.xml文件，打包方式改为war
+> 		1> 修改pom.xml文件，打包方式改为war
 > 			<project>
 >                 <modelVersion>4.0.0</modelVersion>
 >                 <packaging>war</packaging>
@@ -1177,7 +1249,7 @@
 > 				.....
 >             </project>
 > 	
-> 		2) 修改pom.xml文件，构建项目名称
+> 		2> 修改pom.xml文件，构建项目名称
 > 			<build>
 > 				<finalName>springboot-demo</finalName>
 >                   <plugins>
@@ -1190,7 +1262,7 @@
 >                       </plugin>
 >                   </plugins>
 >               </build>
-> 		3) 修改启动类
+> 		3> 修改启动类
 >             public class XdclassApplication extends SpringBootServletInitializer {
 >                 @Override
 >                 protected SpringApplicationBuilder configure(SpringApplicationBuilder 						application) {
@@ -1207,12 +1279,15 @@
 >
 > ```python
 > 1、springboot一般都是打成jar包启动，如果特殊情况的话，可以用war包部署在外部的tomcat上
-> 2、用IDE打包的话，用maven install，如果是用cmd命令的话，就用mvn spring-boot:run命令打包
-> 3、pom.xml文件中把打包方式改为war包后，因为之前是jar包方式打包，导致target目录下有很多的其他文件，	   执行maven clean，默认直接删除target目录，可以，很强，mmp。
-> 	INFO:--- maven-clean-plugin:3.1.0:clean (default-clean) @ springboot-demo ---
-> 	INFO:Deleting H:\desktop\java\springboot-demo\target
+> 2、用IDE打包的话，用maven --> install，
+> 	如果是用cmd命令的话，就用mvn clean package -Dmaven.test.skip=true命令打包
+> 3、pom.xml文件中把打包方式改为war包后，因为之前是jar包方式打包，导致target目录下有很多的其他文件，
+> 	执行maven clean，默认直接删除target目录，可以，很强，mmp。控制台输出：
+> 		INFO:--- maven-clean-plugin:3.1.0:clean (default-clean) @ springboot-demo ---
+> 		INFO:Deleting H:\desktop\java\springboot-demo\target
 > 	然后会出来一个新的target文件，里面少很多东西。其实不需要专门执行maven clean。因为maven 			install不是就是执行clean + compile + package吗
-> 4、window下安装了tomcat，如果点击start.bat之后窗口闪退，则编辑start.bat文件，在最后一行加pause;，	  保存退出，则运行到最后，不会闪退，我们就可以查看到错误信息了
+> 4、window下安装了tomcat，如果点击start.bat之后窗口闪退，则编辑start.bat文件，在最后一行加pause;，
+> 	保存退出，则运行到最后，不会闪退，我们就可以查看到错误信息了
 > 5、Tomcat、Jetty、undertow三种启动容器的压测比较
 > 	使用Jmter测试工具测试性能，QPS,TPS，RT
 > 	https://examples.javacodegeeks.com/enterprise-java/spring/tomcat-vs-jetty-vs-undertow-	  comparison-of-spring-boot-embedded-servlet-containers/
@@ -1220,7 +1295,7 @@
 > ```
 >
 
-#### 15、SpringBoot启动原理
+#### 15、启动类
 
 > #### 查看源码
 >
@@ -1257,6 +1332,22 @@
 > 	其中最后一个执行过程是this.mainApplicationClass = deduceMainApplicationClass();
 > 	是推断应用的main class，
 > ```
+> #### 启动所有方法
+>
+> ```python
+> 方法一：目前默认方法
+> 	SpringApplication.run(ServerProductApplication.class, args);
+> 方法二：创建SpringApplication对象
+> 	SpringApplication application = new SpringApplication(SpringbootDemoApplication.class);
+> 	// ... customize application settings here   
+> 	application.run(args)
+> 	注* 比如上面注释的地方用 application.setWebApplicationType(WebApplicationType.REACTIVE);
+> 方法三：过期方法
+> 	new SpringApplicationBuilder(ServerProductApplication.class).web(true).run(args);
+> 	注* 我是在spring boot 2.0.3上运行的，出现warn信息：
+>     	Warning:(12, 69) java: org.springframework.boot.builder.SpringApplicationBuilder中         的web(boolean)已过时
+>         猜测这个方法是springboot 1.x的方法。
+> ```
 
 #### 16、自定义Filter
 
@@ -1271,8 +1362,9 @@
 > 	查看OrderedCharacterEncodingFilter，查看其继承的CharacterEncodingFilter。
 > 	可以知道最后一行中的filterChain.doFilter(request, response);
 > 3、在启动日志中查看加载的几个过滤器，前提是在application.yml中把logging的级别改为debug
-> 4、官网网址：https://docs.spring.io/spring-boot/docs/2.1.0.BUILD-								SNAPSHOT/reference/htmlsingle/#boot-features-embedded-container-servlets-filters-		listeners
-> 
+> 4、官网网址：
+> 	参考 "官网文档" 章节
+> 	#boot-features-embedded-container-servlets-filters-listeners
 > ```
 >
 > #### 使用Servlet3.0配置自定义Filter实战
@@ -1311,12 +1403,12 @@
 >         }
 > 	2、启动类加@ServletComponentScan
 > 		@SpringBootConfiguration
->         @EnableAutoConfiguration
->         @ComponentScan
->         @ServletComponentScan
->         public class SpringbootDemoApplication {
+> 		@EnableAutoConfiguration
+> 		@ComponentScan
+> 		@ServletComponentScan
+> 		public class SpringbootDemoApplication {
 >             ...
->         }
+> 		}
 > 	3、controller中类
 > 		   @Autowired
 >             private Person person;
@@ -1324,17 +1416,21 @@
 >             public Object entityTest() {
 >                 return person;
 >             }
-> 	笔记1：doFilter是放行的意思
-> 	笔记2：@ServletComponentScan会对Servlet3.0的注解进行扫描
-> 	笔记3：init()是容器启动的时候进行加载。容器会创建一个实例来调用该方法；
-> 		  doFilter()请求被拦截的时候，进行调用；
->            destroy()容器被销毁的时候进行调用。热部署的时候，可以看到。
->                     不过我想，打成war包应该在关闭容器的时候，也能看到
-> 	笔记4：@WebFilter是Servlet3.0中的一个注解。只有加上该注解，
->             标记一个类为filter，被filter进行扫描
->             urlPatterns：拦截规则，支持正则
->             @WebFilter(urlPatterns="/api/*")中的urlPatterns规定了，哪些请求时需要进入过滤器的。
-> 	        根据层级划分的api，比如/api/user/*，/api/user/admin 
+> 	笔记1：
+> 		doFilter是放行的意思
+> 	笔记2：
+> 		@ServletComponentScan会对Servlet3.0的注解进行扫描
+> 	笔记3：
+> 		init()是容器启动的时候进行加载。容器会创建一个实例来调用该方法；
+> 		doFilter()请求被拦截的时候，进行调用；
+> 		destroy()容器被销毁的时候进行调用。热部署的时候，可以看到。
+> 			不过我想，打成war包应该在关闭容器的时候，也能看到
+> 	笔记4：
+> 		@WebFilter是Servlet3.0中的一个注解。只有加上该注解，
+> 		标记一个类为filter，被filter进行扫描
+> 		urlPatterns：拦截规则，支持正则
+> 		@WebFilter(urlPatterns="/api/*")中的urlPatterns规定了，哪些请求时需要进入过滤器的。
+> 		根据层级划分的api，比如/api/user/*，/api/user/admin 
 > ```
 >
 > #### 报错
@@ -1351,9 +1447,11 @@
 >         res.sendRedirect("/index"); ///index.html
 >     }
 > }
-> 注意：其中的重定向，不能写成/index.html，因为我的index.html文件放在了templates文件夹下，这是默认扫	不到的，默认是static/resources/public。
->     但是我有一个controller，路由是/index，return "index"，而且我加了Thymleaf的jar包。
->     所以可以写成sendRedircet("index")
+> 注意：	
+> 	其中的重定向，不能写成/index.html，因为我的index.html文件放在了templates文件夹下，这是默认扫
+> 	不到的，默认是static/resources/public。
+> 	但是我有一个controller，路由是/index，return "index"，而且我加了Thymleaf的jar包。
+> 	所以可以写成sendRedircet("index")
 > ```
 >
 > #### 注意
@@ -1401,7 +1499,7 @@
 >             ...
 >         }
 > 	笔记1：使用SpringBoot或者SpringMVC的时候，框架给我们封装了好多功能，节省了我们的代码量
-> 		比如：从req获取参数，原生servlet需要req.getParameter("xx")，每个参数都需要获取
+> 		比如：从req获取参数，原生servlet需要req.getParameter("xx")，每个参数都需要获取。
 > 			框架的话，直接给我们封装成了对象，映射关系也有
 > 			@PostMapping("/v1/save_user")
 > 			public Object saveUser(@RequestBody User user){
@@ -1417,6 +1515,8 @@
 > #### 使用Servlet3.0新特性自定义Listener
 >
 > ```python
+> 注* 常见监听器
+> 	常用的监听器 servletContextListener、httpSessionListener、servletRequestListener
 > 设置方法：
 > 	第一步：新建一个MyRequestListener，实现ServletRequestListener接口，实现requestDestroyed和		requestInitialized方法，MyRequestListener类上加@WebListener注解
 > 	第二步：SpringBoot的启动类中上@ServletComponentScan注解
@@ -1436,7 +1536,9 @@
 >             System.out.println("--requestInit");
 >         }
 >     }
-> 	
+> 		
+>         或者
+>         
 >     MyContextListener(实战2)
 > 	@WebListener
 >     public class MyContextListener implements ServletContextListener {
@@ -1451,13 +1553,84 @@
 >         }
 >     }
 > 	2、SpringBoot启动类加注解@ServletComponentScan
-> 	   @SpringBootConfiguration
->         @EnableAutoConfiguration
->         @ComponentScan
->         @ServletComponentScan
->         public class SpringbootDemoApplication {
+> 		@SpringBootApplication
+> 		@ServletComponentScan
+> 		public class SpringbootDemoApplication {
 >             ...
->         }
+> 		}
+> ```
+>
+> #### 项目实战 --> 使用上下文监听器
+>
+> ```python
+> 实战1：	
+> 	航油项目之'天气采集系统'
+> 	描述：
+> 		1> 项目自己写了生产者和消费者模式，肯定需要项目一启动就启动消费者，生产者在程序适当时间启			 动。所以消费者最好放在上下文监听器中启动。
+> 		2> 第一次失败，原因，启动类中忘了加@ServletComponentScan
+> 		3> 第二次失败，找不到javax.servlet.annotation这个目录所在jar包，即servlet-api这个jar		   包。pom中手动加入：
+>             <groupId>javax.servlet</groupId> 
+>                <artifactId>javax.servlet-api</artifactId> 
+>                <version>3.0.1</version> 
+>                <scope>provided</scope>
+>             </dependency>
+> 
+> 
+>             <dependency> 
+>                <groupId>javax.servlet.jsp</groupId> 
+>                <artifactId>jsp-api</artifactId> 
+>                <version>2.1</version> 
+>                <scope>provided</scope>
+>             </dependency>
+> 		    引入的注解都不报错，但是项目启动不了
+> 		4> 第三次失败，改引入spring-boot-starter-web，而不是spring-boot-starter。
+> 		   因为@WebListener注解所在Jar包不在spring-boot-starter的jar包中，在spring-boot-                 starter-web的jar包中。
+> 		   还是报错
+> 		5> 第四次成功。
+> 		   将启动类中的new SpringApplicationBuilder().sources(
+>                CnafWeatherApplication.class).web(false).run(args);改为
+>             SpringApplication.run(CnafWeatherApplication.class, args);
+> 		   端口占用，可以从控制台看到是8080
+> 	分析：
+> 	    原始上下文监听器如下：
+>         package com.web.system.listener;
+> 
+>         import java.util.ArrayList;
+>         import javax.servlet.ServletContextEvent;
+>         import javax.servlet.ServletContextListener;
+>         /**
+>          * 自定义的ServletContext监听器，可以在ServletContext加载时做一些初始化的工作
+>          *
+>          */
+>         public class MyServletContextListener implements ServletContextListener {
+>                  @Override
+>                  public void contextDestroyed(ServletContextEvent arg0) {
+>                            System.out.println("MyServletContextListener Destoryed");
+>                  }
+> 
+>                  /**
+>                   * servletContext初始化
+>                   */
+>                  @Override
+>                  public void contextInitialized(ServletContextEvent arg0) {
+> 					System.out.println("MyServletContextListener Init");
+>                  }
+>             }
+> 		
+> 		web.xml配置如下：
+>         <listener>
+> 		<listener-class>com.web.system.listener.MyServletContextListener</listener-class>
+>  	    </listener>
+> 
+> 			所以啊，总而言之，annotation并没有那么玄乎，并不是打个标记就会帮你做什么事情，这个要
+> 		做的事情还是要在后续配套的'反射函数'来自己实现。
+> 			也是需要web.xml里面的配置信息，当然必须是web项目。
+> ```
+>
+> #### @WebListener注解所在Jar包
+>
+> ```python
+> 不在spring-boot-starter的jar包中，在spring-boot-starter-web的jar包中。
 > ```
 >
 > #### 笔记
@@ -1622,7 +1795,7 @@
 > 	继承：WebMvcConfigurationAdapter(SpringBoot2.X之前旧版本)
 > 	实现：SpringBoot2.X 新版本配置拦截器 implements WebMvcConfigurer
 > 3、Filter和Interceptor的区别
-> 	☆ilter是基于函数回调 doFilter()，而Interceptor则是基于AOP思想
+> 	☆Filter是基于函数回调 doFilter()，而Interceptor则是基于AOP思想
 > 	Filter在只在Servlet前后起作用，而Interceptor够深入到方法前后、异常抛出前后等
 > 	Filter依赖于Servlet容器即web应用中，而Interceptor不依赖于Servlet容器所以可以运行在多种环境。
 > 	☆在接口调用的生命周期里，Interceptor可以被多次调用，而Filter只能在容器初始化时调用一次。
@@ -1633,11 +1806,14 @@
 > #### 笔记
 >
 > ```python
-> 1、拦截器的应用场景：微服务都是用的token来进行会话管理，拦截器就可以从redis缓存中拿到token，进行判	断，如果有，则放行，如果没有，而且是前后端分离，则返回json，而且是不分离的话，返回html错误页面。
+> 1、拦截器的应用场景：微服务都是用的token来进行会话管理，拦截器就可以从redis缓存中拿到token，进行判
+> 	断，如果有，则放行，如果没有，而且是前后端分离，则返回json；如果没有，而且是不分离的话，返回	html错误页面。
 >     .excludePathPatterns("/api2/xxx/**");
 > 2、笔记2：拦截的匹配规则
-> 		拦截匹配方法，最后一级要用**，匹配到的是方法。/**的话就是拦截所有
-> 		也可以用链式匹配，registry.addInterceptor(new 							                  LoginInterceptor()).addPathPatterns("/api2/*/**");。如果在这个匹配规则下，有一部分不想		  拦截，则可以链式上加LoginInterceptor()).addPathPatterns("/api2/*/**")
+> 	拦截匹配方法，最后一级要用**，匹配到的是方法。/**的话就是拦截所有
+> 	也可以用链式匹配，registry.addInterceptor(new
+> 	LoginInterceptor()).addPathPatterns("/api2/*/**");。如果在这个匹配规则下，有一部分不想
+> 	拦截，则可以链式上加LoginInterceptor()).addPathPatterns("/api2/*/**")
 > 3、笔记：
 > 	preHandle:进入controller方法之前
 > 	postHandle:调用完controller之后，视图渲染之前
@@ -1652,7 +1828,8 @@
 > #### 官网地址
 >
 > ```python
-> https://docs.spring.io/spring-boot/docs/2.1.0.BUILD-SNAPSHOT/reference/htmlsingle/#using-boot-starter
+> 参考 "管网文档" 章节
+> #using-boot-starter
 > ```
 >
 > #### 简介
@@ -1664,15 +1841,59 @@
 > #### 几个常用的starter
 >
 > ```python
-> spring-boot-starter-activemq
-> spring-boot-starter-aop
-> spring-boot-starter-data-redis
 > spring-boot-starter-freemarker
 > spring-boot-starter-thymeleaf
+> mybatis-spring-boot-starter
+> spring-boot-starter-data-redis
+> spring-boot-starter-data-elasticsearch
+> spring-boot-starter-data-solr
+> spring-boot-starter-activemq
 > spring-boot-starter-webflux
+> spring-boot-starter-actuator
+> 
+> spring-boot-starter-aop
 > ```
 
+#### 21、多环境配置
 
+> #### application.yml
+>
+> ```python
+> 配置方法：
+>     spring:
+>       profiles:
+>         active: dev
+>     ---
+>     spring:
+>       profiles: dev
+>     server:
+>       port: 8888
+>     ---
+>     spring:
+>       profiles: pro
+>     server:
+>       port: 9999
+> 注意：
+> 	1> 三部分之间要有---分割
+> 	2> 通过第一部分的active来控制选用那种环境配置
+> 	3> 还可以通过---增加其他环境配置，比如开发、测试、预上线、生产、灰度
+> ```
+>
+> #### application.properties
+>
+> ```python
+> 配置方法：
+> 	application-dev.properties配置文件内容：
+> 		server.port=8888
+> 	application-pro.properties配置文件内容：
+> 		server.port=9999
+> 	application.properties配置文件内容：
+> 		spring.profiles.active=dev
+> 注意：
+> 	1> 多种环境，则多个配置文件
+> 	2> 配置文件命名规范是固定的，application-后面的名称是active后面的名称
+> 	3> 选用哪个配置文件，有application.properties中的active决定
+> ```
 
 
 
